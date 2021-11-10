@@ -39,9 +39,10 @@ class TLSSocket:
         self.ctx = TLSContext(self.client_private)
 
     def client_hello(self):
-        client_hello_message = protocol.client_hello_message(self.client_public)
-        self.ctx.append_message(client_hello_message)
-        self.sock.send(protocol.wrap_handshake(client_hello_message))
+        message = protocol.client_hello_message(self.client_public)
+        self.ctx.append_message(message)
+        client_hello_handshake = protocol.handshake + protocol.TLS12 + utils.bint_to_bytes(len(message), 2) + message
+        self.sock.send(client_hello_handshake)
 
     def server_hello(self):
         head, message = protocol.read_content(self.sock)
@@ -81,31 +82,26 @@ class TLSSocket:
     def key_schedule(self):
         self.ctx.key_schedule_in_app_data()
 
+    def _encrypted_app_data(self, data, content_type, encrypter):
+        data += content_type
+        message_pad = data + utils.pad16(len(data))
+        tag_size = 16
+        aad = protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(message_pad) + tag_size, 2)
+        encrypted = encrypter.encrypt_and_tag(message_pad, aad)
+        return protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(encrypted), 2) + encrypted
+
     def send_finished(self):
         finished_key = hkdf.HKDF_expand_label(self.ctx.client_hs_traffic_secret, b'finished', b'', 32)
         verify_data = utils.hmac_sha256(finished_key, hkdf.transcript_hash(self.ctx.get_messages()))
-        finished_content_type = protocol.finish_message(verify_data) + protocol.handshake
-        message_pad = finished_content_type + utils.pad16(len(finished_content_type))
-        tag_size = 16
-        aad = protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(message_pad) + tag_size, 2)
-        encrypted = self.ctx.client_traffic_crypto.encrypt_and_tag(message_pad, aad)
-        self.sock.send(protocol.wrap_encrypted(encrypted))
+        finish_message = protocol.finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
+        self.sock.send(self._encrypted_app_data(finish_message, protocol.handshake, self.ctx.client_traffic_crypto))
 
     def send_alert(self):
-        message = b'\x02' + protocol.close_notify + protocol.alert
-        message_pad = message + utils.pad16(len(message))
-        tag_size = 16
-        aad = protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(message_pad) + tag_size, 2)
-        encrypted = self.ctx.client_app_data_crypto.encrypt_and_tag(message_pad, aad)
-        self.sock.send(protocol.wrap_encrypted(encrypted))
+        message = b'\x02' + protocol.close_notify
+        self.sock.send(self._encrypted_app_data(message, protocol.alert, self.ctx.client_app_data_crypto))
 
     def send(self, data):
-        data_content_type = data + protocol.application_data
-        message_pad = data_content_type + utils.pad16(len(data_content_type))
-        tag_size = 16
-        aad = protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(message_pad) + tag_size, 2)
-        encrypted = self.ctx.client_app_data_crypto.encrypt_and_tag(message_pad, aad)
-        self.sock.send(protocol.wrap_encrypted(encrypted))
+        self.sock.send(self._encrypted_app_data(data, protocol.application_data, self.ctx.client_app_data_crypto))
 
     def recv(self, ln):
         head, message = protocol.read_content(self.sock)

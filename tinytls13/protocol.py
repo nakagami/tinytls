@@ -135,15 +135,3 @@ def client_hello_message(pub_key):
     base += utils.bint_to_bytes(len(extensions), 2) + extensions
 
     return client_hello + utils.bint_to_bytes(len(base), 3) + base
-
-
-def finish_message(verify_data):
-    return finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
-
-
-def wrap_handshake(message):
-    return handshake + TLS12 + utils.bint_to_bytes(len(message), 2) + message
-
-
-def wrap_encrypted(encrypted):
-    return application_data + TLS12 + utils.bint_to_bytes(len(encrypted), 2) + encrypted
