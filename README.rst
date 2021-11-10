@@ -1,8 +1,8 @@
 ---------------
-tinytls13
+tinytls
 ---------------
 
-tinytls13 is a pure python TLS1.3 protocol wrapper.
+tinytls is a pure python TLS1.3 protocol wrapper.
 
 As a result of learning TLS1.3, 
 I wrote this as a sample implementation of TLS1.3 client.
@@ -30,12 +30,12 @@ Example
 ::
 
    import socket
-   import tinytls13
+   import tinytls
 
    hostname = "enabled.tls13.com"
 
    sock = socket.create_connection((hostname, 443))
-   with tinytls13.wrap_socket(sock) as ssock:
+   with tinytls.wrap_socket(sock) as ssock:
        ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
        print(ssock.recv(4096).decode())
 

@@ -1,12 +1,12 @@
 import socket
 import unittest
-import tinytls13
-from tinytls13 import utils
-from tinytls13 import protocol
-from tinytls13 import x25519
-from tinytls13 import poly1305
-from tinytls13 import hkdf
-from tinytls13.chacha20 import ChaCha20
+import tinytls
+from tinytls import utils
+from tinytls import protocol
+from tinytls import x25519
+from tinytls import poly1305
+from tinytls import hkdf
+from tinytls.chacha20 import ChaCha20
 
 
 class TestProtocol(unittest.TestCase):
@@ -152,7 +152,7 @@ class TestHttps(unittest.TestCase):
         hostname = "enabled.tls13.com"
         port = 443
         sock = socket.create_connection((hostname, port))
-        ssock = tinytls13.wrap_socket(sock)
+        ssock = tinytls.wrap_socket(sock)
         ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
         response = ssock.recv(4096).decode()
         self.assertEqual(response.split("\r\n")[0], "HTTP/1.1 200 OK")
