@@ -28,11 +28,6 @@ import hashlib
 from tinytls13 import utils
 
 
-def HKDF_extract(salt, IKM):
-    # HKDF (https://tools.ietf.org/html/rfc5869#section-2.2)
-    return utils.hmac_sha256(salt, IKM)
-
-
 def HKDF_expand(prk, info, ln):
     # HKDF (https://tools.ietf.org/html/rfc5869#section-2.3)
     q, r = divmod(ln, 32)
@@ -56,14 +51,9 @@ def HKDF_expand_label(secret, label, hash_value, length):
 
 def derive_secret(secret, label, messages):
     # Derive-Secret (https://tools.ietf.org/html/rfc8446#section-7.1)
-    hash_value = transcript_hash(messages)
+    hash_value = hashlib.sha256(messages).digest()
     hash_size = 32
     return HKDF_expand_label(secret, label, hash_value, hash_size)
-
-
-def transcript_hash(messages):
-    # Transcript Hash (https://tools.ietf.org/html/rfc8446#section-4.4.1)
-    return hashlib.sha256(messages).digest()
 
 
 def gen_key_and_iv(secret):

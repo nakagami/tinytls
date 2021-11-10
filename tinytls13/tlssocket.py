@@ -24,6 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
+import hashlib
 from tinytls13 import protocol
 from tinytls13 import utils
 from tinytls13 import x25519
@@ -73,7 +74,7 @@ class TLSSocket:
                     assert len(verify_data) == 32
                     finished_key = hkdf.HKDF_expand_label(self.ctx.server_hs_traffic_secret, b'finished', b'', 32)
                     expected_verify_data = utils.hmac_sha256(
-                        finished_key, hkdf.transcript_hash(self.ctx.get_messages())
+                        finished_key, hashlib.sha256(self.ctx.get_messages()).digest()
                     )
                     assert verify_data == expected_verify_data
                     finished = True
@@ -92,7 +93,7 @@ class TLSSocket:
 
     def send_finished(self):
         finished_key = hkdf.HKDF_expand_label(self.ctx.client_hs_traffic_secret, b'finished', b'', 32)
-        verify_data = utils.hmac_sha256(finished_key, hkdf.transcript_hash(self.ctx.get_messages()))
+        verify_data = utils.hmac_sha256(finished_key, hashlib.sha256(self.ctx.get_messages()).digest())
         finish_message = protocol.finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
         self.sock.send(self._encrypted_app_data(finish_message, protocol.handshake, self.ctx.client_traffic_crypto))
 

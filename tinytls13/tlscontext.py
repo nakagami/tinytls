@@ -26,6 +26,7 @@
 ##############################################################################
 from tinytls13 import hkdf
 from tinytls13 import x25519
+from tinytls13 import utils
 from tinytls13.poly1305 import ChaCha20Poly1305
 
 
@@ -48,12 +49,12 @@ class TLSContext:
         secret = psk = b'\x00' * 32
 
         # early secret
-        secret = hkdf.HKDF_extract(secret, psk)
+        secret = utils.hmac_sha256(secret, psk)
         self.early_secret = secret
 
         # handshake secret
         secret = hkdf.derive_secret(secret, b'derived', b'')
-        secret = hkdf.HKDF_extract(secret, self.shared_key)
+        secret = utils.hmac_sha256(secret, self.shared_key)
         self.handshake_secret = secret
 
         self.client_hs_traffic_secret = hkdf.derive_secret(secret, b'c hs traffic', messages)
@@ -72,7 +73,7 @@ class TLSContext:
         label = b'\x00' * 32
         secret = self.handshake_secret
         secret = hkdf.derive_secret(secret, b'derived', b'')
-        secret = hkdf.HKDF_extract(secret, label)
+        secret = utils.hmac_sha256(secret, label)
         self.master_secret = secret
 
         self.client_app_traffic_secret = hkdf.derive_secret(secret, b'c ap traffic', messages)
