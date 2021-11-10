@@ -24,7 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-from tinytls13.utils import bytes_to_int, int_to_bytes, xor_byte
+from tinytls.utils import bytes_to_int, int_to_bytes, xor_byte
 
 sigma = b"expand 32-byte k"
 

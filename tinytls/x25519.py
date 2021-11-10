@@ -25,7 +25,7 @@
 #
 ##############################################################################
 # I used  https://asecuritysite.com/encryption/python_25519ecdh as a reference.
-from tinytls13.utils import decode_scalar_x25519, pack_x25519, unpack_x25519
+from tinytls.utils import decode_scalar_x25519, pack_x25519, unpack_x25519
 
 
 P = 2 ** 255 - 19

@@ -24,7 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-from tinytls13.tlssocket import TLSSocket
+from tinytls.tlssocket import TLSSocket
 
 
 def wrap_socket(sock):

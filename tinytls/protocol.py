@@ -24,7 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-from tinytls13 import utils
+from tinytls import utils
 
 # protocol version
 TLS12 = b"\x03\x03"

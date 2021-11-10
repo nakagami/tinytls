@@ -25,7 +25,7 @@
 #
 ##############################################################################
 import hashlib
-from tinytls13 import utils
+from tinytls import utils
 
 
 def HKDF_expand(prk, info, ln):

@@ -24,10 +24,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-from tinytls13 import hkdf
-from tinytls13 import x25519
-from tinytls13 import utils
-from tinytls13.poly1305 import ChaCha20Poly1305
+from tinytls import hkdf
+from tinytls import x25519
+from tinytls import utils
+from tinytls.poly1305 import ChaCha20Poly1305
 
 
 class TLSContext:

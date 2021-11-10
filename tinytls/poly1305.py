@@ -25,8 +25,8 @@
 #
 ##############################################################################
 import math
-from tinytls13 import utils
-from tinytls13.chacha20 import ChaCha20
+from tinytls import utils
+from tinytls.chacha20 import ChaCha20
 
 
 def poly1305_mac(msg, key):

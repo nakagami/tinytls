@@ -25,11 +25,11 @@
 #
 ##############################################################################
 import hashlib
-from tinytls13 import protocol
-from tinytls13 import utils
-from tinytls13 import x25519
-from tinytls13 import hkdf
-from tinytls13.tlscontext import TLSContext
+from tinytls import protocol
+from tinytls import utils
+from tinytls import x25519
+from tinytls import hkdf
+from tinytls.tlscontext import TLSContext
 
 
 class TLSSocket:
