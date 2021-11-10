@@ -151,7 +151,7 @@ class TestHttps(unittest.TestCase):
     def test_https_get(self):
         hostname = "enabled.tls13.com"
         port = 443
-        sock = socket.create_connection((hostname, 443))
+        sock = socket.create_connection((hostname, port))
         ssock = tinytls13.wrap_socket(sock)
         ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
         response = ssock.recv(4096).decode()
