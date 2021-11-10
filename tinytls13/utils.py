@@ -80,7 +80,11 @@ def trim_pad(b):
 
 def urandom(n):
     "n bytes random bytes"
-    return bs([random.randint(0, 255) for _ in range(n)])
+    try:
+        import os
+        return os.urandom(n)
+    except AttributeError:
+        return bs([random.randint(0, 255) for _ in range(n)])
 
 
 def bytes_to_int(b):
