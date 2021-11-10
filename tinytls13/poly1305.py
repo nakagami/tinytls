@@ -44,13 +44,13 @@ def poly1305_mac(msg, key):
 
 
 def poly1305_key_gen(key, nonce):
-    chacha20 = ChaCha20(bytes(key), bytes(nonce))
+    chacha20 = ChaCha20(key, nonce)
     return chacha20.block[:32]
 
 
 def chacha20_aead_encrypt(aad, key, nonce, plaintext):
     otk = poly1305_key_gen(key, nonce)
-    chacha20 = ChaCha20(bytes(key), bytes(nonce), 1)
+    chacha20 = ChaCha20(key, nonce, 1)
     ciphertext = chacha20.translate(plaintext)
     mac_data = aad + utils.pad16(len(aad))
     mac_data += ciphertext + utils.pad16(len(ciphertext))
@@ -61,8 +61,6 @@ def chacha20_aead_encrypt(aad, key, nonce, plaintext):
 
 
 def chacha20_aead_decrypt(aad, key, nonce, ciphertext):
-    key = bytes(key)
-    nonce = bytes(nonce)
     otk = poly1305_key_gen(key, nonce)
     chacha20 = ChaCha20(key, nonce, 1)
     plaintext = chacha20.translate(ciphertext)
@@ -92,7 +90,7 @@ class ChaCha20Poly1305:
     def encrypt_and_tag(self, plaintext, aad):
         nonce = self.get_nonce()
         ciphertext, tag = chacha20_aead_encrypt(aad, self.key, nonce, plaintext)
-        return bytes(ciphertext + tag)
+        return ciphertext + tag
 
     def decrypt_and_verify(self, ciphertext, aad):
         mac = ciphertext[-16:]

@@ -37,7 +37,7 @@ def HKDF_expand(prk, info, ln):
     for x in range(1, n+2):
         t += t_prev
         t_prev = utils.hmac_sha256(prk, t_prev + info + bytearray([x]))
-    return t[:ln]
+    return bytes(t[:ln])
 
 
 def HKDF_expand_label(secret, label, hash_value, length):
@@ -51,14 +51,8 @@ def HKDF_expand_label(secret, label, hash_value, length):
 
 def derive_secret(secret, label, messages):
     # Derive-Secret (https://tools.ietf.org/html/rfc8446#section-7.1)
-    hash_value = hashlib.sha256(messages).digest()
-    hash_size = 32
-    return HKDF_expand_label(secret, label, hash_value, hash_size)
+    return HKDF_expand_label(secret, label, hashlib.sha256(messages).digest(), 32)
 
 
 def gen_key_and_iv(secret):
-    key_size = 32
-    nonce_size = 12
-    write_key = HKDF_expand_label(secret, b'key', b'', key_size)
-    write_iv = HKDF_expand_label(secret, b'iv',  b'', nonce_size)
-    return write_key, write_iv
+    return HKDF_expand_label(secret, b'key', b'', 32), HKDF_expand_label(secret, b'iv',  b'', 12)
