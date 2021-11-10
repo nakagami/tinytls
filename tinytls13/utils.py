@@ -40,16 +40,6 @@ if PYTHON_MAJOR_VER == 3:
         return c
 
 
-def hex_dump(s):
-    import binascii
-    for i in range(0, len(s), 16):
-        segment = s[i: i+16]
-        if PYTHON_MAJOR_VER == 3:
-            print(binascii.b2a_hex(segment).decode())
-        else:
-            print(binascii.b2a_hex(segment))
-
-
 def bs(byte_array):
     if PYTHON_MAJOR_VER == 2:
         return ''.join([chr(c) for c in byte_array])
