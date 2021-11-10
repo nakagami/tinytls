@@ -79,11 +79,7 @@ class ChaCha20Poly1305:
         self.seq_number = 0
 
     def get_nonce(self):
-        nonce = utils.xor_bytes(
-            self.nonce,
-            utils.bint_to_bytes(self.seq_number, len(self.nonce))
-        )
-
+        nonce = utils.xor_bytes(self.nonce, utils.bint_to_bytes(self.seq_number, len(self.nonce)))
         self.seq_number += 1
         return nonce
 
@@ -93,24 +89,18 @@ class ChaCha20Poly1305:
         return ciphertext + tag
 
     def decrypt_and_verify(self, ciphertext, aad):
-        mac = ciphertext[-16:]
-        ciphertext = ciphertext[:-16]
-
+        mac, ciphertext = ciphertext[-16:], ciphertext[:-16]
         nonce = self.get_nonce()
         plaintext, tag = chacha20_aead_decrypt(aad, self.key, nonce, ciphertext)
 
         bad_tag = len(tag) != len(mac)
-
         result = 0
         for x, y in zip(bytearray(tag), bytearray(mac)):
             result |= x ^ y
         if result != 0:
             bad_tag = True
-
         if bad_tag:
             raise Exception('Poly1305: Bad Tag!')
 
         plaintext = utils.trim_pad(plaintext)
-        plaintext, content_type = plaintext[:-1], plaintext[-1:]
-
-        return plaintext, content_type
+        return plaintext[:-1], plaintext[-1:]
