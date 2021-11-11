@@ -61,7 +61,7 @@ handshake_failure = b"\x28"
 server_name = b"\x00\x00"           # 0
 supported_groups = b"\x00\x0a"      # 10
 signature_algorithms = b"\x00\x0d"  # 13
-heartbeat = b"\x00\xff"             # 15
+heartbeat = b"\x00\x1f"             # 15
 supported_versions = b"\x00\x2b"    # 43
 key_share = b"\x00\x33"             # 51
 
