@@ -83,14 +83,23 @@ def parse_server_hello(data):
     assert data[:1] == server_hello
     ln = utils.bytes_to_bint(data[1:4])
     assert len(data) == ln + 4
-    assert data[4:6] == TLS12
-    _ = data[6:6+32]                    # skip random
-    assert data[6+32:6+33] == b'\x00'   # legacy_session_id_echo
-    assert data[6+33:6+35] == TLS_CHACHA20_POLY1305_SHA256
-    assert data[6+35:6+36] == b'\x00'   # legacy_compression_methods (is nothing)
 
-    ln = utils.bytes_to_bint(data[6+36:6+38])
-    extensions = data[6+38:]
+    i = 4
+    assert data[i:i+2] == TLS12
+    i += 2
+    _ = data[i:i+32]                    # skip random
+    i += 32
+    legacy_session_id_len = utils.bytes_to_bint(data[i:i+1])
+    i += 1
+    legacy_session_id = data[i:i+legacy_session_id_len]
+    i += legacy_session_id_len
+    assert data[i:i+2] == TLS_CHACHA20_POLY1305_SHA256
+    i += 2
+    assert data[i:i+1] == b'\x00'   # legacy_compression_methods (is nothing)
+    i += 1
+    ln = utils.bytes_to_bint(data[i:i+2])
+    i += 2
+    extensions = data[i:]
     assert ln == len(extensions)
 
     server_public = b""
