@@ -55,6 +55,7 @@ message_hash = b"\xfe"
 
 # alert description
 close_notify = b"\x00"
+handshake_failure = b"\x28"
 
 # extension type
 supported_groups = b"\x00\x0a"      # 10

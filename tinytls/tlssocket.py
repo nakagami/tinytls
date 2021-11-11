@@ -47,6 +47,8 @@ class TLSSocket:
 
     def server_hello(self):
         head, message = protocol.read_content(self.sock)
+        if (head[:3] == protocol.alert + protocol.TLS12 and message == protocol.server_hello + protocol.handshake_failure):
+            raise Exception("alert handshake failure")
         assert head[:3] == protocol.handshake + protocol.TLS12
         assert message[:1] == protocol.server_hello
         self.ctx.append_message(message)
