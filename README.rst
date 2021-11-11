@@ -47,3 +47,12 @@ Reference
 - https://datatracker.ietf.org/doc/html/rfc8446
 - https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant
 - https://asecuritysite.com/encryption/python_25519ecdh
+
+Check the server
++++++++++++++++++++++++++++++
+
+Use a command like the following to check if the server can be connected
+
+```
+openssl s_client -tls1_3 -ciphersuites 'TLS_CHACHA20_POLY1305_SHA256' -connect enabled.tls13.com:443 -state -debug
+```
