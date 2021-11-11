@@ -58,12 +58,17 @@ close_notify = b"\x00"
 handshake_failure = b"\x28"
 
 # extension type
-server_name = b"\x00\x00"           # 0
-supported_groups = b"\x00\x0a"      # 10
-signature_algorithms = b"\x00\x0d"  # 13
-heartbeat = b"\x00\x1f"             # 15
-supported_versions = b"\x00\x2b"    # 43
-key_share = b"\x00\x33"             # 51
+server_name = b"\x00\x00"               # 0
+supported_groups = b"\x00\x0a"          # 10
+signature_algorithms = b"\x00\x0d"      # 13
+ec_point_formats = b"\x00\x0b"          # 11
+srp = b"\x00\x0c"                       # 12
+encrypt_then_mac = b"\x00\x16"          # 22
+extended_master_secret = b"\x00\x17"    # 23
+session_ticket = b"\x00\x23"            # 35
+supported_versions = b"\x00\x2b"        # 43
+psk_kex_modes = b"\x00\x2d"             # 45
+key_share = b"\x00\x33"                 # 51
 
 # signature schema
 rsa_pss_rsae_sha256 = b"\x08\x04"
