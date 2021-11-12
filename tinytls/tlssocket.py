@@ -33,14 +33,15 @@ from tinytls.tlscontext import TLSContext
 
 
 class TLSSocket:
-    def __init__(self, sock):
+    def __init__(self, sock, server_hostname):
         self.sock = sock
+        self.server_hostname = server_hostname
         self.client_private = utils.urandom(32)
         self.client_public = x25519.base_point_mult(self.client_private)
         self.ctx = TLSContext(self.client_private)
 
     def client_hello(self):
-        message = protocol.client_hello_message(self.client_public)
+        message = protocol.client_hello_message(self.client_public, self.server_hostname)
         self.ctx.append_message(message)
         client_hello_handshake = protocol.handshake + protocol.TLS12 + utils.bint_to_bytes(len(message), 2) + message
         self.sock.send(client_hello_handshake)

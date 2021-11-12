@@ -27,8 +27,8 @@
 from tinytls.tlssocket import TLSSocket
 
 
-def wrap_socket(sock):
-    tls_socket = TLSSocket(sock)
+def wrap_socket(sock, server_hostname=None):
+    tls_socket = TLSSocket(sock, server_hostname)
     tls_socket.client_hello()
     tls_socket.server_hello()
     tls_socket.server_handshake()

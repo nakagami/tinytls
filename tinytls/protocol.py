@@ -124,7 +124,7 @@ def parse_server_hello(data):
     return server_public
 
 
-def client_hello_message(pub_key):
+def client_hello_message(pub_key, server_hostname=None):
     # https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.2
     base = TLS12            # legacy version
     base += utils.urandom(32)     # random
@@ -139,6 +139,14 @@ def client_hello_message(pub_key):
 
     # extensions
     extensions = b""
+    if server_hostname:
+        b = server_hostname.encode()
+        b = utils.bint_to_bytes(len(b), 1) + b
+        b = b'\x00\x00' + b
+        b = utils.bint_to_bytes(len(b), 2) + b
+        b = utils.bint_to_bytes(len(b), 2) + b
+        extensions = server_name + b
+
     extensions += supported_versions + b"\x00\x03" + b"\x02" + TLS13
     extensions += supported_groups + b"\x00\x04" + b"\x00\x02" + key_exchange_x25519
     extensions += (
