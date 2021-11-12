@@ -145,12 +145,13 @@ class TestHKDF(unittest.TestCase):
 
 
 class TestHttps(unittest.TestCase):
+    hostname = "enabled.tls13.com"
+    port = 443
+
     def test_https_get(self):
-        hostname = "enabled.tls13.com"
-        port = 443
-        sock = socket.create_connection((hostname, port))
+        sock = socket.create_connection((self.hostname, self.port))
         ssock = tinytls.wrap_socket(sock)
-        ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
+        ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(self.hostname).encode())
         response = ssock.recv(20).decode()
         self.assertEqual(len(response), 20)
         self.assertEqual(response.split("\r\n")[0], "HTTP/1.1 200 OK")
