@@ -4,7 +4,7 @@ import tinytls
 from tinytls import utils
 from tinytls import protocol
 from tinytls import x25519
-from tinytls import poly1305
+from tinytls import chacha20poly1305
 from tinytls import hkdf
 from tinytls.chacha20 import ChaCha20
 
@@ -41,18 +41,18 @@ class TestChaCha20(unittest.TestCase):
         self.assertEqual(plain, b'plain text')
 
 
-class TestPoly1305(unittest.TestCase):
+class TestChaCha20Poly1305(unittest.TestCase):
     def test_poly1305_mac(self):
         msg = b'Cryptographic Forum Research Group'
         key = utils.hex_to_bytes("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b")
-        tag = poly1305.poly1305_mac(msg, key)
+        tag = chacha20poly1305.poly1305_mac(msg, key)
         self.assertEqual(tag, utils.hex_to_bytes("a8061dc1305136c6c22b8baf0c0127a9"))
 
     def test_poly1305_key_gen(self):
         key = utils.hex_to_bytes("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
         nonce = utils.hex_to_bytes("000000000001020304050607")
         self.assertEqual(
-            poly1305.poly1305_key_gen(key, nonce),
+            chacha20poly1305.poly1305_key_gen(key, nonce),
             utils.hex_to_bytes("8ad5a08b905f81cc815040274ab29471a833b637e3fd0da508dbb8e2fdd1a646")
         )
 
@@ -66,7 +66,7 @@ class TestPoly1305(unittest.TestCase):
         iv = b'@ABCDEFG'
         constant = utils.hex_to_bytes("07000000")
         nonce = constant + iv
-        ciphertext, tag = poly1305.chacha20_aead_encrypt(aad, key, nonce, plaintext)
+        ciphertext, tag = chacha20poly1305.chacha20_aead_encrypt(aad, key, nonce, plaintext)
 
         expected_ciphertext = utils.hex_to_bytes('''
             d3 1a 8d 34 64 8e 60 db 7b 86 af bc 53 ef 7e c2
@@ -110,7 +110,7 @@ class TestPoly1305(unittest.TestCase):
             a6 ad 5c b4 02 2b 02 70 9b
         ''')
 
-        plaintext, tag = poly1305.chacha20_aead_decrypt(aad, key, nonce, ciphertext)
+        plaintext, tag = chacha20poly1305.chacha20_aead_decrypt(aad, key, nonce, ciphertext)
 
         expected_plaintext = utils.hex_to_bytes('''
             49 6e 74 65 72 6e 65 74 2d 44 72 61 66 74 73 20

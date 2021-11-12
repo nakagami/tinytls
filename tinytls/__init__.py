@@ -29,7 +29,7 @@ from tinytls import protocol
 from tinytls import hkdf
 from tinytls import x25519
 from tinytls import utils
-from tinytls.poly1305 import ChaCha20Poly1305
+from tinytls.chacha20poly1305 import ChaCha20Poly1305
 
 
 class TLSContext:
