@@ -180,16 +180,16 @@ def client_hello_message(pub_key, server_hostname=None):
         b = utils.bint_to_bytes(len(b), 2) + b
         b = utils.bint_to_bytes(len(b), 2) + b
         extensions = server_name + b
-    extensions += ec_point_formats + utils.hex_to_bytes("000403000102")
+    extensions += ec_point_formats + b"\x00\x04\x03\x00\x01\x02"
     extensions += supported_groups + b"\x00\x04" + b"\x00\x02" + key_exchange_x25519
-    extensions += session_ticket + utils.hex_to_bytes("0000")
-    extensions += encrypt_then_mac + utils.hex_to_bytes("0000")
-    # extensions += extended_master_secret + utils.hex_to_bytes("0000")
+    extensions += session_ticket + b"\x00\x00"
+    extensions += encrypt_then_mac + b"\x00\x00"
+    # extensions += extended_master_secret + b"\x00\x00"
     b = utils.bint_to_bytes(len(signature_schemas), 2) + signature_schemas
     b = utils.bint_to_bytes(len(b), 2) + b
     extensions += signature_algorithms + b
     extensions += supported_versions + b"\x00\x03" + b"\x02" + TLS13
-    # extensions += psk_kex_modes + utils.hex_to_bytes("00020101")
+    # extensions += psk_kex_modes + b"\x00\x02\x01\x01"
     extensions += (
         key_share + b"\x00\x26" + b"\x00\x24" + key_exchange_x25519 +
         utils.bint_to_bytes(len(pub_key), 2) + pub_key
