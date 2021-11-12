@@ -94,11 +94,11 @@ def parse_server_hello(data):
     i = 4
     assert data[i:i+2] == TLS12
     i += 2
-    _ = data[i:i+32]                    # skip random
+    _ = data[i:i+32]                        # skip random
     i += 32
     legacy_session_id_len = utils.bytes_to_bint(data[i:i+1])
     i += 1
-    legacy_session_id = data[i:i+legacy_session_id_len]
+    _ = data[i:i+legacy_session_id_len]     # legacy_session_id
     i += legacy_session_id_len
     assert data[i:i+2] == TLS_CHACHA20_POLY1305_SHA256
     i += 2
@@ -147,16 +147,24 @@ def client_hello_message(pub_key, server_hostname=None):
         b = utils.bint_to_bytes(len(b), 2) + b
         extensions = server_name + b
 
-    extensions += supported_versions + b"\x00\x03" + b"\x02" + TLS13
+    extensions += ec_point_formats + utils.hex_to_bytes("000403000102")
     extensions += supported_groups + b"\x00\x04" + b"\x00\x02" + key_exchange_x25519
-    extensions += (
-        signature_algorithms + b"\x00\x08" + b"\x00\x06" +
-        rsa_pss_rsae_sha256 + rsa_pss_rsae_sha384 + rsa_pss_rsae_sha512
+    extensions += session_ticket + utils.hex_to_bytes("0000")
+    extensions += encrypt_then_mac + utils.hex_to_bytes("0000")
+    # extensions += extended_master_secret + utils.hex_to_bytes("0000")
+    #extensions += (
+    #    signature_algorithms + b"\x00\x08" + b"\x00\x06" +
+    #    rsa_pss_rsae_sha256 + rsa_pss_rsae_sha384 + rsa_pss_rsae_sha512
+    #)
+    extensions += signature_algorithms + utils.hex_to_bytes(
+        "001e001c040305030603080708080809080a080b080408050806040105010601"
     )
+    extensions += supported_versions + b"\x00\x03" + b"\x02" + TLS13
+    # extensions += psk_kex_modes + utils.hex_to_bytes("00020101")
     extensions += (
         key_share + b"\x00\x26" + b"\x00\x24" + key_exchange_x25519 +
         utils.bint_to_bytes(len(pub_key), 2) + pub_key
     )
-    base += utils.bint_to_bytes(len(extensions), 2) + extensions
 
+    base += utils.bint_to_bytes(len(extensions), 2) + extensions
     return client_hello + utils.bint_to_bytes(len(base), 3) + base
