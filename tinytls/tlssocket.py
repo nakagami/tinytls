@@ -39,6 +39,7 @@ class TLSSocket:
         self.client_private = utils.urandom(32)
         self.client_public = x25519.base_point_mult(self.client_private)
         self.ctx = TLSContext(self.client_private)
+        self.read_buf = b''
 
     def client_hello(self):
         message = protocol.client_hello_message(self.client_public, self.server_hostname)
@@ -108,9 +109,12 @@ class TLSSocket:
         self.sock.send(self._encrypted_app_data(data, protocol.application_data, self.ctx.client_app_data_crypto))
 
     def recv(self, ln):
-        head, message = protocol.read_content(self.sock)
-        plaindata, content_type = self.ctx.server_app_data_crypto.decrypt_and_verify(message, head)
-        return plaindata
+        if not self.read_buf:
+            head, message = protocol.read_content(self.sock)
+            plaindata, content_type = self.ctx.server_app_data_crypto.decrypt_and_verify(message, head)
+            self.read_buf = plaindata
+        r, self.read_buf = self.read_buf[:ln], self.read_buf[ln:]
+        return r
 
     def __enter__(self):
         return self

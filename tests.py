@@ -154,7 +154,8 @@ class TestHttps(unittest.TestCase):
         sock = socket.create_connection((hostname, port))
         ssock = tinytls.wrap_socket(sock)
         ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
-        response = ssock.recv(4096).decode()
+        response = ssock.recv(20).decode()
+        self.assertEqual(len(response), 20)
         self.assertEqual(response.split("\r\n")[0], "HTTP/1.1 200 OK")
         sock.close()
 
