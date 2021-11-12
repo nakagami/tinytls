@@ -82,7 +82,12 @@ key_exchange_x25519 = b"\x00\x1d"
 def read_content(sock):
     head = sock.recv(5)
     ln = utils.bytes_to_bint(head[-2:])
-    message = sock.recv(ln)
+    message = b""
+    while (ln):
+        buf = sock.recv(ln)
+        ln -= len(buf)
+        message += buf
+
     return head, message
 
 
