@@ -26,7 +26,96 @@
 ##############################################################################
 import math
 from tinytls import utils
-from tinytls.chacha20 import ChaCha20
+
+sigma = b"expand 32-byte k"
+
+# ChaCha20
+
+
+def add_u32(x, y):
+    return (x + y) & 0xffffffff
+
+
+def rotate_u32(x, n):
+    y = x << n
+    z = x >> (32 - n)
+    return (y | z) & 0xffffffff
+
+
+def quaterround(a, b, c, d):
+    a = add_u32(a, b)
+    d ^= a
+    d = rotate_u32(d, 16)
+
+    c = add_u32(c, d)
+    b ^= c
+    b = rotate_u32(b, 12)
+
+    a = add_u32(a, b)
+    d ^= a
+    d = rotate_u32(d, 8)
+
+    c = add_u32(c, d)
+    b ^= c
+    b = rotate_u32(b, 7)
+
+    return a, b, c, d
+
+
+class ChaCha20:
+    def __init__(self, key, nonce, pos=0):
+        pos_len = 16 - len(nonce)
+        assert len(key) == 32
+        assert pos_len == 4 or pos_len == 8
+        pos_bytes = utils.int_to_bytes(pos, pos_len)
+        block_bytes = sigma + key + pos_bytes + nonce
+        assert len(block_bytes) == 64
+
+        state = []
+        for i in range(0, len(block_bytes), 4):
+            state.append(utils.bytes_to_int(block_bytes[i:i+4]))
+        self.state = state
+        self.block = self.chacha20_round_bytes()
+        self.block_pos = 0
+        self.pos_len = pos_len
+
+    def chacha20_round_bytes(self):
+        x = self.state[:]
+
+        for i in range(10):
+            # column rounds
+            x[0], x[4], x[8], x[12] = quaterround(x[0], x[4], x[8], x[12])
+            x[1], x[5], x[9], x[13] = quaterround(x[1], x[5], x[9], x[13])
+            x[2], x[6], x[10], x[14] = quaterround(x[2], x[6], x[10], x[14])
+            x[3], x[7], x[11], x[15] = quaterround(x[3], x[7], x[11], x[15])
+            # diagonal rounds
+            x[0], x[5], x[10], x[15] = quaterround(x[0], x[5], x[10], x[15])
+            x[1], x[6], x[11], x[12] = quaterround(x[1], x[6], x[11], x[12])
+            x[2], x[7], x[8], x[13] = quaterround(x[2], x[7], x[8], x[13])
+            x[3], x[4], x[9], x[14] = quaterround(x[3], x[4], x[9], x[14])
+
+        for i in range(16):
+            x[i] = add_u32(x[i], self.state[i])
+
+        return b''.join([utils.int_to_bytes(i, 4) for i in x])
+
+    def translate(self, plain):
+        enc = b''
+
+        for i in range(len(plain)):
+            enc += utils.xor_byte(plain[i], self.block[self.block_pos])
+            self.block_pos += 1
+            if len(self.block) == self.block_pos:
+                self.state[12] = add_u32(self.state[12], 1)
+                if self.pos_len == 8 and self.state[12] == 0:
+                    self.state[13] = add_u32(self.state[13], 1)
+                self.block = self.chacha20_round_bytes()
+                self.block_pos = 0
+
+        return enc
+
+
+# Poly1305
 
 
 def poly1305_mac(msg, key):
