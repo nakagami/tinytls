@@ -71,9 +71,38 @@ psk_kex_modes = b"\x00\x2d"             # 45
 key_share = b"\x00\x33"                 # 51
 
 # signature schema
+
+# RSASSA-PKCS1-v1_5 algorithms
+rsa_pkcs1_sha256 = b"\x04\x01"
+rsa_pkcs1_sha384 = b"\x05\x01"
+rsa_pkcs1_sha512 = b"\x06\x01"
+
+# ECDSA algorithms
+ecdsa_secp256r1_sha256 = b"\x04\x03"
+ecdsa_secp384r1_sha384 = b"\x05\x03"
+ecdsa_secp512r1_sha512 = b"\x06\x03"
+
+# RSASSA-PSS algorithms with public key OID rsaEncryption
 rsa_pss_rsae_sha256 = b"\x08\x04"
 rsa_pss_rsae_sha384 = b"\x08\x05"
 rsa_pss_rsae_sha512 = b"\x08\x06"
+# EdDSA algorithms
+ed25519 = b"\x08\x07"
+ed448 = b"\x08\x08"
+
+# RSASSA-PSS algorithms with public key OID RSASSA-PSS
+rsa_pss_pss_sha256 = b"\x08\x09"
+rsa_pss_pss_sha384 = b"\x08\x0a"
+rsa_pss_pss_sha512 = b"\x08\x0b"
+
+signature_schemas = b"".join([
+    rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512,
+    ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384, ecdsa_secp512r1_sha512,
+    rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512,
+    ed25519, ed448,
+    rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512,
+])
+
 
 # key exchange method
 key_exchange_x25519 = b"\x00\x1d"
@@ -151,19 +180,14 @@ def client_hello_message(pub_key, server_hostname=None):
         b = utils.bint_to_bytes(len(b), 2) + b
         b = utils.bint_to_bytes(len(b), 2) + b
         extensions = server_name + b
-
     extensions += ec_point_formats + utils.hex_to_bytes("000403000102")
     extensions += supported_groups + b"\x00\x04" + b"\x00\x02" + key_exchange_x25519
     extensions += session_ticket + utils.hex_to_bytes("0000")
     extensions += encrypt_then_mac + utils.hex_to_bytes("0000")
     # extensions += extended_master_secret + utils.hex_to_bytes("0000")
-    #extensions += (
-    #    signature_algorithms + b"\x00\x08" + b"\x00\x06" +
-    #    rsa_pss_rsae_sha256 + rsa_pss_rsae_sha384 + rsa_pss_rsae_sha512
-    #)
-    extensions += signature_algorithms + utils.hex_to_bytes(
-        "001e001c040305030603080708080809080a080b080408050806040105010601"
-    )
+    b = utils.bint_to_bytes(len(signature_schemas), 2) + signature_schemas
+    b = utils.bint_to_bytes(len(b), 2) + b
+    extensions += signature_algorithms + b
     extensions += supported_versions + b"\x00\x03" + b"\x02" + TLS13
     # extensions += psk_kex_modes + utils.hex_to_bytes("00020101")
     extensions += (
