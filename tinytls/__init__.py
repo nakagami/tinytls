@@ -159,7 +159,7 @@ class TLSSocket:
 
     def send_alert(self):
         self.sock.send(
-            protocol.encrypted_app_data(protocol.close_notify_message, protocol.alert, self.ctx.client_app_data_crypto)
+            protocol.encrypted_app_data(protocol.close_notify_message(), protocol.alert, self.ctx.client_app_data_crypto)
         )
 
     def send(self, data):
