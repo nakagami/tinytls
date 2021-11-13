@@ -105,11 +105,16 @@ class TLSSocket:
         self.server_hostname = server_hostname
         self.read_buf = b''
 
+    def _sendall(self, b):
+        while b:
+            ln = self.sock.send(b)
+            b = b[ln:]
+
     def client_hello(self):
         message = protocol.client_hello_message(self.ctx.client_public, self.server_hostname)
         self.ctx.append_message(message)
         client_hello_handshake = protocol.handshake + protocol.TLS12 + utils.bint_to_bytes(len(message), 2) + message
-        self.sock.send(client_hello_handshake)
+        self._sendall(client_hello_handshake)
 
     def server_hello(self):
         head, message = protocol.read_content(self.sock)
@@ -151,19 +156,19 @@ class TLSSocket:
         self.ctx.key_schedule_in_app_data()
 
     def send_finished(self):
-        self.sock.send(
+        self._sendall(
             protocol.encrypted_app_data(
                 protocol.finished_message(self.ctx), protocol.handshake, self.ctx.client_traffic_crypto
             )
         )
 
     def send_alert(self):
-        self.sock.send(
+        self._sendall(
             protocol.encrypted_app_data(protocol.close_notify_message(), protocol.alert, self.ctx.client_app_data_crypto)
         )
 
     def send(self, data):
-        self.sock.send(
+        self._sendall(
             protocol.encrypted_app_data(data, protocol.application_data, self.ctx.client_app_data_crypto)
         )
 
