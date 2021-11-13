@@ -18,7 +18,6 @@ jobs:
     - name: Install MicroPython
       run: |
         sudo snap install micropython
-        /snap/bin/micropython -m upip install micropython-socket
         /snap/bin/micropython -m upip install micropython-unittest
     - name: Test
       run: |
