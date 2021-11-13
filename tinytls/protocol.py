@@ -207,14 +207,16 @@ def client_hello_message(pub_key, server_hostname=None):
     base += utils.bint_to_bytes(len(extensions), 2) + extensions
     return client_hello + utils.bint_to_bytes(len(base), 3) + base
 
+
 def finished_verify_data(ctx, secret):
     finished_key = hkdf.HKDF_expand_label(secret, b'finished', b'', 32)
     return utils.hmac_sha256(finished_key, hashlib.sha256(ctx.get_messages()).digest())
+
 
 def finished_message(ctx):
     verify_data = finished_verify_data(ctx, ctx.client_hs_traffic_secret)
     return finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
 
-def close_notify_message():
-    return b'\x02' + protocol.close_notify
 
+def close_notify_message():
+    return b'\x02' + close_notify

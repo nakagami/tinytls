@@ -24,7 +24,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-import hashlib
 from tinytls import protocol
 from tinytls import hkdf
 from tinytls import x25519
@@ -150,7 +149,9 @@ class TLSSocket:
 
     def send_finished(self):
         self.sock.send(
-            protocol.encrypted_app_data(protocol.finished_message(self.ctx), protocol.handshake, self.ctx.client_traffic_crypto)
+            protocol.encrypted_app_data(
+                protocol.finished_message(self.ctx), protocol.handshake, self.ctx.client_traffic_crypto
+            )
         )
 
     def send_alert(self):
