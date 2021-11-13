@@ -10,9 +10,22 @@ from tinytls import hkdf
 
 class TestProtocol(unittest.TestCase):
     def test_client_hello(self):
-        private_key = utils.urandom(32)
+        private_key = b'\x00' * 32
         public_key = x25519.base_point_mult(private_key)
         data = protocol.client_hello_message(public_key)
+        self.assertEqual(data[:6], utils.hex_to_bytes("0100008c0303"))
+        self.assertEqual(
+            data[6+32:],
+            utils.hex_to_bytes("""
+                            000004130300ff010000
+                5f000a00040002001d00160000000d00
+                1e001c04010501060104030503060308
+                0408050806080708080809080a080b00
+                2b0003020304003300260024001d0020
+                2fe57da347cd62431528daac5fbb2907
+                30fff684afc4cfc2ed90995f58cb3b74
+            """)
+        )
 
 
 class TestX25519(unittest.TestCase):
