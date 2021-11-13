@@ -167,6 +167,16 @@ class TestHttps(unittest.TestCase):
     hostname = "enabled.tls13.com"
     port = 443
 
+    def create_connection(self):
+        try:
+            import usocket
+            sock = usocket.socket()
+            sock.connect(usocket.getaddrinfo(self.host, self.port)[0][-1])
+        except ImportError:
+            import socket
+            sock = socket.create_connection((self.hostname, self.port))
+        return sock
+
     def assertHttp200(self, s):
         self.assertEqual(s.split("\r\n")[0], "HTTP/1.1 200 OK")
 

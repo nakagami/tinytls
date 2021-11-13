@@ -25,18 +25,10 @@ Supported Python
 - Python2.7, 3.5+
 - MicroPython
 
-Requirements for MicroPython
-+++++++++++++++++++++++++++++++++++
-
-MicroPython needs micropython-socket package.
-
-::
-
-   micropython -m upip install micropython-socket
-
 Example
 ++++++++
 
+CPython
 ::
 
    import socket
@@ -49,6 +41,20 @@ Example
        ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
        print(ssock.recv(4096).decode())
 
+MicroPython
+::
+
+   import usocket
+   import tinytls
+
+   hostname = "enabled.tls13.com"
+
+   sock = usocket.socket()
+   sock.connect(usocket.getaddrinfo(hostname, 443)[0][-1])
+
+   with tinytls.wrap_socket(sock) as ssock:
+       ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(hostname).encode())
+       print(ssock.recv(4096).decode())
 
 Reference
 ++++++++++++++++++++
