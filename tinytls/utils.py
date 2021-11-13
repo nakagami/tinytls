@@ -94,7 +94,7 @@ def urandom(n):
         import os
         return os.urandom(n)
     except AttributeError:
-        return bs([random.randint(0, 255) for _ in range(n)])
+        return bs([random.getrandbits(8) for _ in range(n)])
 
 
 def bytes_to_int(b):
