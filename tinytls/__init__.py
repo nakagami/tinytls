@@ -33,8 +33,9 @@ from tinytls.chacha20poly1305 import ChaCha20Poly1305
 
 
 class TLSContext:
-    def __init__(self, client_private):
-        self.client_private = client_private
+    def __init__(self):
+        self.client_private = utils.urandom(32)
+        self.client_public = x25519.base_point_mult(self.client_private)
         self.messages = []
 
     def get_messages(self):
@@ -87,18 +88,26 @@ class TLSContext:
         self.client_app_data_crypto = ChaCha20Poly1305(client_app_write_key, client_app_write_iv)
         self.server_app_data_crypto = ChaCha20Poly1305(server_app_write_key, server_app_write_iv)
 
+    def wrap_socket(self, sock, server_hostname=None):
+        tls_socket = TLSSocket(self, sock, server_hostname)
+        tls_socket.client_hello()
+        tls_socket.server_hello()
+        tls_socket.server_handshake()
+        tls_socket.send_finished()
+        tls_socket.key_schedule()
+
+        return tls_socket
+
 
 class TLSSocket:
-    def __init__(self, sock, server_hostname):
+    def __init__(self, ctx, sock, server_hostname):
+        self.ctx = ctx
         self.sock = sock
         self.server_hostname = server_hostname
-        self.client_private = utils.urandom(32)
-        self.client_public = x25519.base_point_mult(self.client_private)
-        self.ctx = TLSContext(self.client_private)
         self.read_buf = b''
 
     def client_hello(self):
-        message = protocol.client_hello_message(self.client_public, self.server_hostname)
+        message = protocol.client_hello_message(self.ctx.client_public, self.server_hostname)
         self.ctx.append_message(message)
         client_hello_handshake = protocol.handshake + protocol.TLS12 + utils.bint_to_bytes(len(message), 2) + message
         self.sock.send(client_hello_handshake)
@@ -179,12 +188,9 @@ class TLSSocket:
         self.send_alert()
 
 
-def wrap_socket(sock, server_hostname=None):
-    tls_socket = TLSSocket(sock, server_hostname)
-    tls_socket.client_hello()
-    tls_socket.server_hello()
-    tls_socket.server_handshake()
-    tls_socket.send_finished()
-    tls_socket.key_schedule()
+def create_default_context():
+    return TLSContext()
 
-    return tls_socket
+
+def wrap_socket(sock, server_hostname=None):
+    return create_default_context().wrap_socket(sock, server_hostname)
