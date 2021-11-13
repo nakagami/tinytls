@@ -148,13 +148,27 @@ class TestHttps(unittest.TestCase):
     hostname = "enabled.tls13.com"
     port = 443
 
+    def assertHttp200(self, s):
+        self.assertEqual(s.split("\r\n")[0], "HTTP/1.1 200 OK")
+
+    def _http_get(self, ssock, path):
+        ssock.send("GET {} HTTP/1.1\r\nHost:{}\r\n\r\n".format(path, self.hostname).encode())
+
     def test_https_get(self):
         sock = socket.create_connection((self.hostname, self.port))
         ssock = tinytls.wrap_socket(sock)
-        ssock.send("GET / HTTP/1.1\r\nHost:{}\r\n\r\n".format(self.hostname).encode())
+        self._http_get(ssock, "/")
         response = ssock.recv(20).decode()
         self.assertEqual(len(response), 20)
-        self.assertEqual(response.split("\r\n")[0], "HTTP/1.1 200 OK")
+        self.assertHttp200(response)
+        sock.close()
+
+    def test_default_context(self):
+        sock = socket.create_connection((self.hostname, self.port))
+        context = tinytls.create_default_context()
+        ssock = context.wrap_socket(sock)
+        self._http_get(ssock, "/")
+        self.assertHttp200(ssock.recv(4096).decode())
         sock.close()
 
 
