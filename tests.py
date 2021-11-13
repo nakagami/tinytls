@@ -184,7 +184,7 @@ class TestHttps(unittest.TestCase):
         ssock.send("GET {} HTTP/1.1\r\nHost:{}\r\n\r\n".format(path, self.hostname).encode())
 
     def test_https_get(self):
-        sock = socket.create_connection((self.hostname, self.port))
+        sock = self.create_connection()
         ssock = tinytls.wrap_socket(sock)
         self._http_get(ssock, "/")
         response = ssock.recv(20).decode()
@@ -193,7 +193,7 @@ class TestHttps(unittest.TestCase):
         sock.close()
 
     def test_default_context(self):
-        sock = socket.create_connection((self.hostname, self.port))
+        sock = self.create_connection()
         context = tinytls.create_default_context()
         ssock = context.wrap_socket(sock)
         self._http_get(ssock, "/")
