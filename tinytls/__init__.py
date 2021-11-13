@@ -141,37 +141,27 @@ class TLSSocket:
                     # recieve Finishied
                     verify_data = segment[4:]
                     assert len(verify_data) == 32
-                    finished_key = hkdf.HKDF_expand_label(self.ctx.server_hs_traffic_secret, b'finished', b'', 32)
-                    expected_verify_data = utils.hmac_sha256(
-                        finished_key, hashlib.sha256(self.ctx.get_messages()).digest()
-                    )
-                    assert verify_data == expected_verify_data
+                    assert verify_data == protocol.finished_verify_data(self.ctx, self.ctx.server_hs_traffic_secret)
                     finished = True
                 self.ctx.append_message(segment)
 
     def key_schedule(self):
         self.ctx.key_schedule_in_app_data()
 
-    def _encrypted_app_data(self, data, content_type, encrypter):
-        data += content_type
-        message_pad = data + utils.pad16(len(data))
-        tag_size = 16
-        aad = protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(message_pad) + tag_size, 2)
-        encrypted = encrypter.encrypt_and_tag(message_pad, aad)
-        return protocol.application_data + protocol.TLS12 + utils.bint_to_bytes(len(encrypted), 2) + encrypted
-
     def send_finished(self):
-        finished_key = hkdf.HKDF_expand_label(self.ctx.client_hs_traffic_secret, b'finished', b'', 32)
-        verify_data = utils.hmac_sha256(finished_key, hashlib.sha256(self.ctx.get_messages()).digest())
-        finish_message = protocol.finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
-        self.sock.send(self._encrypted_app_data(finish_message, protocol.handshake, self.ctx.client_traffic_crypto))
+        self.sock.send(
+            protocol.encrypted_app_data(protocol.finished_message(self.ctx), protocol.handshake, self.ctx.client_traffic_crypto)
+        )
 
     def send_alert(self):
-        message = b'\x02' + protocol.close_notify
-        self.sock.send(self._encrypted_app_data(message, protocol.alert, self.ctx.client_app_data_crypto))
+        self.sock.send(
+            protocol.encrypted_app_data(protocol.close_notify_message, protocol.alert, self.ctx.client_app_data_crypto)
+        )
 
     def send(self, data):
-        self.sock.send(self._encrypted_app_data(data, protocol.application_data, self.ctx.client_app_data_crypto))
+        self.sock.send(
+            protocol.encrypted_app_data(data, protocol.application_data, self.ctx.client_app_data_crypto)
+        )
 
     def recv(self, ln):
         if not self.read_buf:

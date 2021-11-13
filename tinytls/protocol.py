@@ -24,6 +24,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
+import hashlib
+from tinytls import hkdf
 from tinytls import utils
 
 # protocol version
@@ -105,6 +107,15 @@ signature_schemas = b"".join([
 
 # key exchange method
 key_exchange_x25519 = b"\x00\x1d"
+
+
+def encrypted_app_data(data, content_type, encrypter):
+    data += content_type
+    message_pad = data + utils.pad16(len(data))
+    tag_size = 16
+    aad = application_data + TLS12 + utils.bint_to_bytes(len(message_pad) + tag_size, 2)
+    encrypted = encrypter.encrypt_and_tag(message_pad, aad)
+    return application_data + TLS12 + utils.bint_to_bytes(len(encrypted), 2) + encrypted
 
 
 def read_content(sock):
@@ -195,3 +206,15 @@ def client_hello_message(pub_key, server_hostname=None):
 
     base += utils.bint_to_bytes(len(extensions), 2) + extensions
     return client_hello + utils.bint_to_bytes(len(base), 3) + base
+
+def finished_verify_data(ctx, secret):
+    finished_key = hkdf.HKDF_expand_label(secret, b'finished', b'', 32)
+    return utils.hmac_sha256(finished_key, hashlib.sha256(ctx.get_messages()).digest())
+
+def finished_message(ctx):
+    verify_data = finished_verify_data(ctx, ctx.client_hs_traffic_secret)
+    return finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
+
+def close_notify_message():
+    return b'\x02' + protocol.close_notify
+
