@@ -17,9 +17,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install MicroPython
       run: |
-        sudo apt install micropython
-        micropython -m upip install micropython-socket
-        micropython -m upip install micropython-unittest
+        sudo snap install micropython
+        /snap/bin/micropython -m upip install micropython-socket
+        /snap/bin/micropython -m upip install micropython-unittest
     - name: Test
       run: |
-        micropython tests.py
+        /snap/bin/micropython tests.py
