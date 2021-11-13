@@ -208,13 +208,13 @@ def client_hello_message(pub_key, server_hostname=None):
     return client_hello + utils.bint_to_bytes(len(base), 3) + base
 
 
-def finished_verify_data(ctx, secret):
+def finished_verify_data(messages, secret):
     finished_key = hkdf.HKDF_expand_label(secret, b'finished', b'', 32)
-    return utils.hmac_sha256(finished_key, hashlib.sha256(ctx.get_messages()).digest())
+    return utils.hmac_sha256(finished_key, hashlib.sha256(messages).digest())
 
 
 def finished_message(ctx):
-    verify_data = finished_verify_data(ctx, ctx.client_hs_traffic_secret)
+    verify_data = finished_verify_data(ctx.get_messages(), ctx.client_hs_traffic_secret)
     return finished + utils.bint_to_bytes(len(verify_data), 3) + verify_data
 
 

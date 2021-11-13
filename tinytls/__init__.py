@@ -140,7 +140,10 @@ class TLSSocket:
                     # recieve Finishied
                     verify_data = segment[4:]
                     assert len(verify_data) == 32
-                    assert verify_data == protocol.finished_verify_data(self.ctx, self.ctx.server_hs_traffic_secret)
+                    expected_verify_data = protocol.finished_verify_data(
+                        self.ctx.get_messages(), self.ctx.server_hs_traffic_secret
+                    )
+                    assert verify_data == expected_verify_data
                     finished = True
                 self.ctx.append_message(segment)
 
