@@ -25,6 +25,15 @@ Supported Python
 - Python2.7, 3.5+
 - MicroPython
 
+Requirements for MicroPython
++++++++++++++++++++++++++++++++++++
+
+MicroPython needs micropython-socket package.
+
+::
+
+   micropython -m upip install micropython-socket
+
 Example
 ++++++++
 
