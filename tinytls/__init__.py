@@ -31,6 +31,10 @@ from tinytls import utils
 from tinytls.chacha20poly1305 import ChaCha20Poly1305
 
 
+VERSION = (0, 1, 0)
+__version__ = '%s.%s.%s' % VERSION
+
+
 class TLSContext:
     def __init__(self):
         self.client_private = utils.urandom(32)
