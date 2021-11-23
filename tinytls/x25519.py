@@ -24,7 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-# I used  https://asecuritysite.com/encryption/python_25519ecdh as a reference.
+# I referred to https://asecuritysite.com/encryption/python_25519ecdh
 from tinytls.utils import decode_scalar_x25519, pack_x25519, unpack_x25519
 
 

@@ -26,10 +26,8 @@
 ##############################################################################
 import sys
 import hashlib
-try:
-    import random
-except ImportError:
-    import urandom as random
+import binascii
+import random
 
 
 PYTHON_MAJOR_VER = sys.version_info[0]
@@ -41,16 +39,16 @@ if PYTHON_MAJOR_VER == 3:
 
 
 def hex_dump(s):
-    import binascii
     for i in range(0, len(s), 16):
         segment = s[i: i+16]
+        hex_string = binascii.hexlify(segment)
         if PYTHON_MAJOR_VER == 3:
-            print(binascii.b2a_hex(segment).decode())
-        else:
-            print(binascii.b2a_hex(segment))
+            hex_string = hex_string.decode()
+        print(hex_string)
 
 
 def bs(byte_array):
+    "int (as character) list to bytes"
     if PYTHON_MAJOR_VER == 2:
         return ''.join([chr(c) for c in byte_array])
     else:
@@ -82,6 +80,7 @@ def pad16(n):
 
 
 def trim_pad(b):
+    "trim padding \x00"
     i = len(b) - 1
     while ord(b[i]) == 0:
         i -= 1
