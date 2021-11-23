@@ -37,6 +37,8 @@ class TestX25519(unittest.TestCase):
         self.assertEqual(x25519.multscalar(a, b_pub), x25519.multscalar(b, a_pub))
 
     def test_modulo(self):
+        # There are older micropython implementations that get this calculation wrong
+        # If this test fails, please upgrade your micropython version.
         self.assertEqual(
             3351951982485649274893506249551461531869841455148098344430890360929126892766387686103746101496463077066730197146548147517807404440828687420984717926233961 % 57896044618658097711785492504343953926634992332820282019728792003956564819949,
             128797905270015590400
