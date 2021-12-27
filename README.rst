@@ -67,7 +67,8 @@ Reference
 Check the server
 +++++++++++++++++++++++++++++
 
-Use a command like the following to check if the server can be connected
+If you cannot connect to the server with tinytls,
+use a command like the following to check if the server can be connected
 
 ::
 
