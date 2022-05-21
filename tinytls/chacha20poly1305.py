@@ -36,11 +36,7 @@ def xor_byte(c1, c2):
 
 def xor_bytes(b1, b2):
     assert len(b1) == len(b2)
-    if not isinstance(b1, bytearray):
-        b1 = bytearray(b1)
-    if not isinstance(b2, bytearray):
-        b2 = bytearray(b2)
-    return bytes(bytearray([x ^ y for (x, y) in zip(b1, b2)]))
+    return bytes(bytearray([x ^ y for (x, y) in zip(bytearray(b1), bytearray(b2))]))
 
 
 # ChaCha20
