@@ -26,8 +26,6 @@
 ##############################################################################
 import sys
 import hashlib
-import binascii
-import random
 
 
 def bs(byte_array):
@@ -49,6 +47,7 @@ def urandom(n):
         import os
         return os.urandom(n)
     except AttributeError:
+        import random
         return bs([random.getrandbits(8) for _ in range(n)])
 
 
