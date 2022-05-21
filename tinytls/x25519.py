@@ -25,7 +25,7 @@
 #
 ##############################################################################
 # I referred to https://asecuritysite.com/encryption/python_25519ecdh
-from tinytls.utils import decode_scalar_x25519, pack_x25519, unpack_x25519
+from tinytls import utils
 
 
 P = 2 ** 255 - 19
@@ -39,6 +39,27 @@ def cswap(swap, x_2, x_3):
     x_3 = x_3 + dummy
     x_3 %= P
     return (x_2, x_3)
+
+
+def pack_x25519(n):
+    return bytes(bytearray([((n >> (8 * i)) & 255) for i in range(32)]))
+
+
+# Equivalent to RFC7748 decodeUCoordinate followed by decodeLittleEndian
+def unpack_x25519(s):
+    if len(s) != 32:
+        raise ValueError('Invalid Curve25519 scalar (len=%d)' % len(s))
+    t = sum([utils.byte_to_int(s[i]) << (8 * i) for i in range(31)])
+    t += (utils.byte_to_int(s[31]) & 0x7f) << 248
+    return t
+
+
+def decode_scalar_x25519(k):
+    b = [utils.byte_to_int(b) for b in k]
+    b[0] &= 248
+    b[31] &= 127
+    b[31] |= 64
+    return sum([b[i] << 8 * i for i in range(32)])
 
 
 # Based on https://tools.ietf.org/html/rfc7748

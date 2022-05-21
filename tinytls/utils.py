@@ -112,40 +112,6 @@ def bint_to_bytes(val, nbytes):
     return bs(b)
 
 
-def xor_byte(c1, c2):
-    return bytes(bytearray([(byte_to_int(c1) ^ byte_to_int(c2))]))
-
-
-def xor_bytes(b1, b2):
-    assert len(b1) == len(b2)
-    if not isinstance(b1, bytearray):
-        b1 = bytearray(b1)
-    if not isinstance(b2, bytearray):
-        b2 = bytearray(b2)
-    return bs([x ^ y for (x, y) in zip(b1, b2)])
-
-
-def pack_x25519(n):
-    return bytes(bytearray([((n >> (8 * i)) & 255) for i in range(32)]))
-
-
-# Equivalent to RFC7748 decodeUCoordinate followed by decodeLittleEndian
-def unpack_x25519(s):
-    if len(s) != 32:
-        raise ValueError('Invalid Curve25519 scalar (len=%d)' % len(s))
-    t = sum([byte_to_int(s[i]) << (8 * i) for i in range(31)])
-    t += (byte_to_int(s[31]) & 0x7f) << 248
-    return t
-
-
-def decode_scalar_x25519(k):
-    b = [byte_to_int(b) for b in k]
-    b[0] &= 248
-    b[31] &= 127
-    b[31] |= 64
-    return sum([b[i] << 8 * i for i in range(32)])
-
-
 def hmac_sha256(key, msg):
     try:
         import hmac

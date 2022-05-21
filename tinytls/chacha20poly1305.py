@@ -29,6 +29,20 @@ from tinytls import utils
 
 sigma = b"expand 32-byte k"
 
+
+def xor_byte(c1, c2):
+    return bytes(bytearray([(utils.byte_to_int(c1) ^ utils.byte_to_int(c2))]))
+
+
+def xor_bytes(b1, b2):
+    assert len(b1) == len(b2)
+    if not isinstance(b1, bytearray):
+        b1 = bytearray(b1)
+    if not isinstance(b2, bytearray):
+        b2 = bytearray(b2)
+    return bytes(bytearray([x ^ y for (x, y) in zip(b1, b2)]))
+
+
 # ChaCha20
 
 
@@ -103,7 +117,7 @@ class ChaCha20:
         enc = b''
 
         for i in range(len(plain)):
-            enc += utils.xor_byte(plain[i], self.block[self.block_pos])
+            enc += xor_byte(plain[i], self.block[self.block_pos])
             self.block_pos += 1
             if len(self.block) == self.block_pos:
                 self.state[12] = add_u32(self.state[12], 1)
@@ -176,7 +190,7 @@ class ChaCha20Poly1305:
         self.seq_number = 0
 
     def get_nonce(self):
-        nonce = utils.xor_bytes(self.nonce, utils.bint_to_bytes(self.seq_number, len(self.nonce)))
+        nonce = xor_bytes(self.nonce, utils.bint_to_bytes(self.seq_number, len(self.nonce)))
         self.seq_number += 1
         return nonce
 
