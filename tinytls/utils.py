@@ -33,15 +33,6 @@ import random
 PYTHON_MAJOR_VER = sys.version_info[0]
 
 
-def hex_dump(s):
-    for i in range(0, len(s), 16):
-        segment = s[i: i+16]
-        hex_string = binascii.hexlify(segment)
-        if PYTHON_MAJOR_VER == 3:
-            hex_string = hex_string.decode()
-        print(hex_string)
-
-
 def bs(byte_array):
     "int (as character) list to bytes"
     return bytes(bytearray(byte_array))
