@@ -31,7 +31,7 @@ from tinytls import utils
 from tinytls.chacha20poly1305 import ChaCha20Poly1305
 
 
-VERSION = (0, 1, 0)
+VERSION = (0, 1, 1)
 __version__ = '%s.%s.%s' % VERSION
 
 
