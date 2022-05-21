@@ -30,28 +30,9 @@ import binascii
 import random
 
 
-PYTHON_MAJOR_VER = sys.version_info[0]
-
-
 def bs(byte_array):
     "int (as character) list to bytes"
     return bytes(bytearray(byte_array))
-
-
-def xor_byte(c1, c2):
-    if PYTHON_MAJOR_VER == 3:
-        return bytes([c1 ^ c2])
-    else:
-        return chr(byte_to_int(c1) ^ byte_to_int(c2))
-
-
-def xor_bytes(b1, b2):
-    assert len(b1) == len(b2)
-    if not isinstance(b1, bytearray):
-        b1 = bytearray(b1)
-    if not isinstance(b2, bytearray):
-        b2 = bytearray(b2)
-    return bs([x ^ y for (x, y) in zip(b1, b2)])
 
 
 def pad16(n):
@@ -80,7 +61,7 @@ def urandom(n):
 
 
 def byte_to_int(c):
-    if PYTHON_MAJOR_VER == 3:
+    if sys.version_info[0] == 3:
         return c
     else:
         return ord(c)
@@ -137,6 +118,19 @@ def bint_to_bytes(val, nbytes):
                 b[nbytes - i - 1] = 0
                 b[nbytes - i - 2] += 1
     return bs(b)
+
+
+def xor_byte(c1, c2):
+    return bytes(bytearray([(byte_to_int(c1) ^ byte_to_int(c2))]))
+
+
+def xor_bytes(b1, b2):
+    assert len(b1) == len(b2)
+    if not isinstance(b1, bytearray):
+        b1 = bytearray(b1)
+    if not isinstance(b2, bytearray):
+        b2 = bytearray(b2)
+    return bs([x ^ y for (x, y) in zip(b1, b2)])
 
 
 def pack_x25519(n):
