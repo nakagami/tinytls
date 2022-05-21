@@ -8,15 +8,24 @@ from tinytls import chacha20poly1305
 from tinytls import hkdf
 
 
+def hex_to_bytes(s):
+    "convert hex string to bytes"
+    s = ''.join(s.split())
+    if len(s) % 2:
+        s = b'0' + s
+    ia = [int(s[i:i+2], 16) for i in range(0, len(s), 2)]   # int array
+    return bytes(bytearray(ia))
+
+
 class TestProtocol(unittest.TestCase):
     def test_client_hello(self):
         private_key = b'\x00' * 32
         public_key = x25519.base_point_mult(private_key)
         data = protocol.client_hello_message(public_key)
-        self.assertEqual(data[:6], utils.hex_to_bytes("0100008c0303"))
+        self.assertEqual(data[:6], hex_to_bytes("0100008c0303"))
         self.assertEqual(
             data[6+32:],
-            utils.hex_to_bytes("""
+            hex_to_bytes("""
                             000004130300ff010000
                 5f000a00040002001d00160000000d00
                 1e001c04010501060104030503060308
@@ -47,46 +56,46 @@ class TestX25519(unittest.TestCase):
 
 class TestChaCha20Poly1305(unittest.TestCase):
     def test_chacha20(self):
-        key = utils.hex_to_bytes("23AD52B15FA7EBDC4672D72289253D95DC9A4324FC369F593FDCC7733AD77617")
-        nonce = utils.hex_to_bytes("5A5F6C13C1F12653")
-        enc = utils.hex_to_bytes("6bd00ba222523f58de196fb471eea08d9fff95b5bbe6123dd3a8b9026ac0fa84")
+        key = hex_to_bytes("23AD52B15FA7EBDC4672D72289253D95DC9A4324FC369F593FDCC7733AD77617")
+        nonce = hex_to_bytes("5A5F6C13C1F12653")
+        enc = hex_to_bytes("6bd00ba222523f58de196fb471eea08d9fff95b5bbe6123dd3a8b9026ac0fa84")
         chacha = chacha20poly1305.ChaCha20(key, nonce)
         self.assertEqual(chacha.translate(enc), b'TMCTF{Whose_garden_is_internet?}')
 
         chacha1 = chacha20poly1305.ChaCha20(key, nonce, 123)
         enc = chacha1.translate(b'plain text')
-        self.assertEqual(enc, utils.hex_to_bytes("39df7fdfcdd66c56e762"))
+        self.assertEqual(enc, hex_to_bytes("39df7fdfcdd66c56e762"))
         chacha2 = chacha20poly1305.ChaCha20(key, nonce, 123)
         plain = chacha2.translate(enc)
         self.assertEqual(plain, b'plain text')
 
     def test_poly1305_mac(self):
         msg = b'Cryptographic Forum Research Group'
-        key = utils.hex_to_bytes("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b")
+        key = hex_to_bytes("85d6be7857556d337f4452fe42d506a80103808afb0db2fd4abff6af4149f51b")
         tag = chacha20poly1305.poly1305_mac(msg, key)
-        self.assertEqual(tag, utils.hex_to_bytes("a8061dc1305136c6c22b8baf0c0127a9"))
+        self.assertEqual(tag, hex_to_bytes("a8061dc1305136c6c22b8baf0c0127a9"))
 
     def test_poly1305_key_gen(self):
-        key = utils.hex_to_bytes("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
-        nonce = utils.hex_to_bytes("000000000001020304050607")
+        key = hex_to_bytes("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
+        nonce = hex_to_bytes("000000000001020304050607")
         self.assertEqual(
             chacha20poly1305.poly1305_key_gen(key, nonce),
-            utils.hex_to_bytes("8ad5a08b905f81cc815040274ab29471a833b637e3fd0da508dbb8e2fdd1a646")
+            hex_to_bytes("8ad5a08b905f81cc815040274ab29471a833b637e3fd0da508dbb8e2fdd1a646")
         )
 
     def test_chacha20_aead_encrypt(self):
         plaintext = b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it."
-        aad = utils.hex_to_bytes("50515253c0c1c2c3c4c5c6c7")
-        key = utils.hex_to_bytes('''
+        aad = hex_to_bytes("50515253c0c1c2c3c4c5c6c7")
+        key = hex_to_bytes('''
             80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f
             90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f
         ''')
         iv = b'@ABCDEFG'
-        constant = utils.hex_to_bytes("07000000")
+        constant = hex_to_bytes("07000000")
         nonce = constant + iv
         ciphertext, tag = chacha20poly1305.chacha20_aead_encrypt(aad, key, nonce, plaintext)
 
-        expected_ciphertext = utils.hex_to_bytes('''
+        expected_ciphertext = hex_to_bytes('''
             d3 1a 8d 34 64 8e 60 db 7b 86 af bc 53 ef 7e c2
             a4 ad ed 51 29 6e 08 fe a9 e2 b5 a7 36 ee 62 d6
             3d be a4 5e 8c a9 67 12 82 fa fb 69 da 92 72 8b
@@ -96,19 +105,19 @@ class TestChaCha20Poly1305(unittest.TestCase):
             3f f4 de f0 8e 4b 7a 9d e5 76 d2 65 86 ce c6 4b
             61 16
         ''')
-        expected_tag = utils.hex_to_bytes("1ae10b594f09e26a7e902ecbd0600691")
+        expected_tag = hex_to_bytes("1ae10b594f09e26a7e902ecbd0600691")
 
         self.assertEqual(ciphertext, expected_ciphertext)
         self.assertEqual(tag, expected_tag)
 
     def test_chacha20poly1305_aead_decrypt(self):
-        aad = utils.hex_to_bytes('f33388860000000000004e91')
-        key = utils.hex_to_bytes('''
+        aad = hex_to_bytes('f33388860000000000004e91')
+        key = hex_to_bytes('''
             1c 92 40 a5 eb 55 d3 8a f3 33 88 86 04 f6 b5 f0
             47 39 17 c1 40 2b 80 09 9d ca 5c bc 20 70 75 c0
         ''')
-        nonce = utils.hex_to_bytes('000000000102030405060708')
-        ciphertext = utils.hex_to_bytes('''
+        nonce = hex_to_bytes('000000000102030405060708')
+        ciphertext = hex_to_bytes('''
             64 a0 86 15 75 86 1a f4 60 f0 62 c7 9b e6 43 bd
             5e 80 5c fd 34 5c f3 89 f1 08 67 0a c7 6c 8c b2
             4c 6c fc 18 75 5d 43 ee a0 9e e9 4e 38 2d 26 b0
@@ -130,7 +139,7 @@ class TestChaCha20Poly1305(unittest.TestCase):
 
         plaintext, tag = chacha20poly1305.chacha20_aead_decrypt(aad, key, nonce, ciphertext)
 
-        expected_plaintext = utils.hex_to_bytes('''
+        expected_plaintext = hex_to_bytes('''
             49 6e 74 65 72 6e 65 74 2d 44 72 61 66 74 73 20
             61 72 65 20 64 72 61 66 74 20 64 6f 63 75 6d 65
             6e 74 73 20 76 61 6c 69 64 20 66 6f 72 20 61 20
@@ -149,7 +158,7 @@ class TestChaCha20Poly1305(unittest.TestCase):
             2f e2 80 9c 77 6f 72 6b 20 69 6e 20 70 72 6f 67
             72 65 73 73 2e 2f e2 80 9d
         ''')
-        expected_tag = utils.hex_to_bytes('eead9d67890cbb22392336fea1851f38')
+        expected_tag = hex_to_bytes('eead9d67890cbb22392336fea1851f38')
 
         self.assertEqual(plaintext, expected_plaintext)
         self.assertEqual(tag, expected_tag)
@@ -160,9 +169,9 @@ class TestHKDF(unittest.TestCase):
         key, iv = hkdf.gen_key_and_iv(b"secret")
         self.assertEqual(
             key,
-            utils.hex_to_bytes("e28fac577f7cbf78dd5340290aae9bfe1a409dddea52a5d32a14e259bbfc22c5")
+            hex_to_bytes("e28fac577f7cbf78dd5340290aae9bfe1a409dddea52a5d32a14e259bbfc22c5")
         )
-        self.assertEqual(iv, utils.hex_to_bytes("6e5cca6a1f741ab6b6751c93"))
+        self.assertEqual(iv, hex_to_bytes("6e5cca6a1f741ab6b6751c93"))
 
 
 class TestHttps(unittest.TestCase):

@@ -33,11 +33,6 @@ import random
 PYTHON_MAJOR_VER = sys.version_info[0]
 
 
-if PYTHON_MAJOR_VER == 3:
-    def ord(c):
-        return c
-
-
 def hex_dump(s):
     for i in range(0, len(s), 16):
         segment = s[i: i+16]
@@ -49,17 +44,14 @@ def hex_dump(s):
 
 def bs(byte_array):
     "int (as character) list to bytes"
-    if PYTHON_MAJOR_VER == 2:
-        return ''.join([chr(c) for c in byte_array])
-    else:
-        return bytes(byte_array)
+    return bytes(bytearray(byte_array))
 
 
 def xor_byte(c1, c2):
     if PYTHON_MAJOR_VER == 3:
         return bytes([c1 ^ c2])
     else:
-        return chr(ord(c1) ^ ord(c2))
+        return chr(byte_to_int(c1) ^ byte_to_int(c2))
 
 
 def xor_bytes(b1, b2):
@@ -82,7 +74,7 @@ def pad16(n):
 def trim_pad(b):
     "trim padding \x00"
     i = len(b) - 1
-    while ord(b[i]) == 0:
+    while byte_to_int(b[i]) == 0:
         i -= 1
     return b[:i+1]
 
@@ -96,12 +88,19 @@ def urandom(n):
         return bs([random.getrandbits(8) for _ in range(n)])
 
 
+def byte_to_int(c):
+    if PYTHON_MAJOR_VER == 3:
+        return c
+    else:
+        return ord(c)
+
+
 def bytes_to_int(b):
     "Convert bytes to little endian int."
     n = 0
     for c in reversed(b):
         n <<= 8
-        n += ord(c)
+        n += byte_to_int(c)
     return n
 
 
@@ -110,7 +109,7 @@ def bytes_to_bint(b):
     n = 0
     for c in b:
         n <<= 8
-        n += ord(c)
+        n += byte_to_int(c)
     return n
 
 
@@ -149,33 +148,21 @@ def bint_to_bytes(val, nbytes):
     return bs(b)
 
 
-def hex_to_bytes(s):
-    "convert hex string to bytes"
-    s = ''.join(s.split())
-    if len(s) % 2:
-        s = b'0' + s
-    ia = [int(s[i:i+2], 16) for i in range(0, len(s), 2)]   # int array
-    return bs(ia) if PYTHON_MAJOR_VER == 3 else b''.join([chr(c) for c in ia])
-
-
 def pack_x25519(n):
-    if PYTHON_MAJOR_VER == 2:
-        return b''.join([chr((n >> (8 * i)) & 255) for i in range(32)])
-    else:
-        return bytes([((n >> (8 * i)) & 255) for i in range(32)])
+    return bytes(bytearray([((n >> (8 * i)) & 255) for i in range(32)]))
 
 
 # Equivalent to RFC7748 decodeUCoordinate followed by decodeLittleEndian
 def unpack_x25519(s):
     if len(s) != 32:
         raise ValueError('Invalid Curve25519 scalar (len=%d)' % len(s))
-    t = sum([ord(s[i]) << (8 * i) for i in range(31)])
-    t += (ord(s[31]) & 0x7f) << 248
+    t = sum([byte_to_int(s[i]) << (8 * i) for i in range(31)])
+    t += (byte_to_int(s[31]) & 0x7f) << 248
     return t
 
 
 def decode_scalar_x25519(k):
-    b = [ord(b) if PYTHON_MAJOR_VER == 2 else b for b in k]
+    b = [byte_to_int(b) for b in k]
     b[0] &= 248
     b[31] &= 127
     b[31] |= 64
