@@ -118,6 +118,14 @@ class ChaCha20:
 # Poly1305
 
 
+def trim_pad(b):
+    "trim padding \x00"
+    i = len(b) - 1
+    while utils.byte_to_int(b[i]) == 0:
+        i -= 1
+    return b[:i+1]
+
+
 def poly1305_mac(msg, key):
     assert len(key) == 32
     r = utils.bytes_to_int(key[:16]) & 0x0ffffffc0ffffffc0ffffffc0fffffff
@@ -191,5 +199,5 @@ class ChaCha20Poly1305:
         if bad_tag:
             raise Exception('Poly1305: Bad Tag!')
 
-        plaintext = utils.trim_pad(plaintext)
+        plaintext = trim_pad(plaintext)
         return plaintext[:-1], plaintext[-1:]

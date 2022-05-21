@@ -43,14 +43,6 @@ def pad16(n):
         return b""
 
 
-def trim_pad(b):
-    "trim padding \x00"
-    i = len(b) - 1
-    while byte_to_int(b[i]) == 0:
-        i -= 1
-    return b[:i+1]
-
-
 def urandom(n):
     "n bytes random bytes"
     try:
