@@ -17,6 +17,7 @@ Restriction
 - Support TLS_CHACHA20_POLY1305_SHA256 cipher suite only.
 - Support X25519 key exchange only.
 - It does not verify TLS certificate.
+- Not support `0-RTT`
 - Client certificate authentication is not available.
 
 Supported Python
