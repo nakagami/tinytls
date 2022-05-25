@@ -24,6 +24,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
+"""ChaCha20-Poly1305
+https://en.wikipedia.org/wiki/ChaCha20-Poly1305
+"""
 import math
 from tinytls import utils
 

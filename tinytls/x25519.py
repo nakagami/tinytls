@@ -24,6 +24,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
+"""Elliptic curve Diffie-Hellman key exchange
+https://en.wikipedia.org/wiki/Curve25519
+"""
 # I referred to https://asecuritysite.com/encryption/python_25519ecdh
 from tinytls import utils
 

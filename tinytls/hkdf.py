@@ -24,6 +24,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
+"""HMAC-based Key Derivation Function (HKDF)
+https://datatracker.ietf.org/doc/html/rfc5869#section-2
+"""
 import hashlib
 from tinytls import utils
 
