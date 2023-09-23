@@ -33,6 +33,24 @@ from tinytls import utils
 sigma = b"expand 32-byte k"
 
 
+def int_to_bytes(val, nbytes):
+    "Convert int val to nbytes little endian bytes."
+    v = abs(val)
+    byte_array = []
+    for n in range(nbytes):
+        byte_array.append((v >> (8 * n)) & 0xff)
+    if val < 0:
+        for i in range(nbytes):
+            byte_array[i] = ~byte_array[i] + 256
+        byte_array[0] += 1
+        for i in range(nbytes):
+            if byte_array[i] == 256:
+                byte_array[i] = 0
+                byte_array[i+1] += 1
+
+    return bytes(byte_array)
+
+
 def xor_byte(c1, c2):
     return bytes(bytearray([(utils.byte_to_int(c1) ^ utils.byte_to_int(c2))]))
 
@@ -80,7 +98,7 @@ class ChaCha20:
         pos_len = 16 - len(nonce)
         assert len(key) == 32
         assert pos_len == 4 or pos_len == 8
-        pos_bytes = utils.int_to_bytes(pos, pos_len)
+        pos_bytes = int_to_bytes(pos, pos_len)
         block_bytes = sigma + key + pos_bytes + nonce
         assert len(block_bytes) == 64
 
@@ -110,7 +128,7 @@ class ChaCha20:
         for i in range(16):
             x[i] = add_u32(x[i], self.state[i])
 
-        return b''.join([utils.int_to_bytes(i, 4) for i in x])
+        return b''.join([int_to_bytes(i, 4) for i in x])
 
     def translate(self, plain):
         enc = b''
@@ -150,7 +168,7 @@ def poly1305_mac(msg, key):
         a += n
         a = (r * a) % p
     a += s
-    return utils.int_to_bytes(a, 16)
+    return int_to_bytes(a, 16)
 
 
 def poly1305_key_gen(key, nonce):
@@ -164,8 +182,8 @@ def chacha20_aead_encrypt(aad, key, nonce, plaintext):
     ciphertext = chacha20.translate(plaintext)
     mac_data = aad + utils.pad16(len(aad))
     mac_data += ciphertext + utils.pad16(len(ciphertext))
-    mac_data += utils.int_to_bytes(len(aad), 8)
-    mac_data += utils.int_to_bytes(len(ciphertext), 8)
+    mac_data += int_to_bytes(len(aad), 8)
+    mac_data += int_to_bytes(len(ciphertext), 8)
     tag = poly1305_mac(mac_data, otk)
     return (ciphertext, tag)
 
@@ -176,8 +194,8 @@ def chacha20_aead_decrypt(aad, key, nonce, ciphertext):
     plaintext = chacha20.translate(ciphertext)
     mac_data = aad + utils.pad16(len(aad))
     mac_data += ciphertext + utils.pad16(len(ciphertext))
-    mac_data += utils.int_to_bytes(len(aad), 8)
-    mac_data += utils.int_to_bytes(len(ciphertext), 8)
+    mac_data += int_to_bytes(len(aad), 8)
+    mac_data += int_to_bytes(len(ciphertext), 8)
     tag = poly1305_mac(mac_data, otk)
     return (plaintext, tag)
 

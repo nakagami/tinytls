@@ -28,11 +28,6 @@ import sys
 import hashlib
 
 
-def _bs(byte_array):
-    "int (as character) list to bytes"
-    return bytes(bytearray(byte_array))
-
-
 def pad16(n):
     "16 bytes alignment padding bytes"
     if n % 16:
@@ -48,7 +43,7 @@ def urandom(n):
         return os.urandom(n)
     except AttributeError:
         import random
-        return _bs([random.getrandbits(8) for _ in range(n)])
+        return bytes([random.getrandbits(8) for _ in range(n)])
 
 
 def byte_to_int(c):
@@ -76,24 +71,6 @@ def bytes_to_bint(b):
     return n
 
 
-def int_to_bytes(val, nbytes):
-    "Convert int val to nbytes little endian bytes."
-    v = abs(val)
-    byte_array = []
-    for n in range(nbytes):
-        byte_array.append((v >> (8 * n)) & 0xff)
-    if val < 0:
-        for i in range(nbytes):
-            byte_array[i] = ~byte_array[i] + 256
-        byte_array[0] += 1
-        for i in range(nbytes):
-            if byte_array[i] == 256:
-                byte_array[i] = 0
-                byte_array[i+1] += 1
-
-    return _bs(byte_array)
-
-
 def bint_to_bytes(val, nbytes):
     "Convert int val to nbytes big endigan bytes."
     v = abs(val)
@@ -108,7 +85,7 @@ def bint_to_bytes(val, nbytes):
             if b[nbytes - i - 1] == 256:
                 b[nbytes - i - 1] = 0
                 b[nbytes - i - 2] += 1
-    return _bs(b)
+    return bytes(b)
 
 
 def hmac_sha256(key, msg):
