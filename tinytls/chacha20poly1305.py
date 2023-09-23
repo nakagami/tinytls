@@ -30,8 +30,6 @@ https://en.wikipedia.org/wiki/ChaCha20-Poly1305
 import math
 from tinytls import utils
 
-sigma = b"expand 32-byte k"
-
 
 def bytes_to_int(b):
     "Convert bytes to little endian int."
@@ -40,20 +38,7 @@ def bytes_to_int(b):
 
 def int_to_bytes(val, nbytes):
     "Convert int val to nbytes little endian bytes."
-    v = abs(val)
-    byte_array = []
-    for n in range(nbytes):
-        byte_array.append((v >> (8 * n)) & 0xff)
-    if val < 0:
-        for i in range(nbytes):
-            byte_array[i] = ~byte_array[i] + 256
-        byte_array[0] += 1
-        for i in range(nbytes):
-            if byte_array[i] == 256:
-                byte_array[i] = 0
-                byte_array[i+1] += 1
-
-    return bytes(byte_array)
+    return bytes(reversed(utils.bint_to_bytes(val, nbytes)))
 
 
 def xor_byte(c1, c2):
@@ -103,6 +88,8 @@ class ChaCha20:
         pos_len = 16 - len(nonce)
         assert len(key) == 32
         assert pos_len == 4 or pos_len == 8
+        sigma = b"expand 32-byte k"
+
         pos_bytes = int_to_bytes(pos, pos_len)
         block_bytes = sigma + key + pos_bytes + nonce
         assert len(block_bytes) == 64
