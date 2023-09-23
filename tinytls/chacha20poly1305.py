@@ -52,7 +52,7 @@ def int_to_bytes(val, nbytes):
 
 
 def xor_byte(c1, c2):
-    return bytes(bytearray([(utils.byte_to_int(c1) ^ utils.byte_to_int(c2))]))
+    return bytes(bytearray([c1 ^ c2]))
 
 
 def xor_bytes(b1, b2):
@@ -152,7 +152,7 @@ class ChaCha20:
 def trim_pad(b):
     "trim padding \x00"
     i = len(b) - 1
-    while utils.byte_to_int(b[i]) == 0:
+    while b[i] == 0:
         i -= 1
     return b[:i+1]
 

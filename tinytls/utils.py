@@ -46,19 +46,12 @@ def urandom(n):
         return bytes([random.getrandbits(8) for _ in range(n)])
 
 
-def byte_to_int(c):
-    if sys.version_info[0] == 3:
-        return c
-    else:
-        return ord(c)
-
-
 def bytes_to_int(b):
     "Convert bytes to little endian int."
     n = 0
     for c in reversed(b):
         n <<= 8
-        n += byte_to_int(c)
+        n += c
     return n
 
 
@@ -67,7 +60,7 @@ def bytes_to_bint(b):
     n = 0
     for c in b:
         n <<= 8
-        n += byte_to_int(c)
+        n += c
     return n
 
 

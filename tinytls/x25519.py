@@ -52,13 +52,13 @@ def pack_x25519(n):
 def unpack_x25519(s):
     if len(s) != 32:
         raise ValueError('Invalid Curve25519 scalar (len=%d)' % len(s))
-    t = sum([utils.byte_to_int(s[i]) << (8 * i) for i in range(31)])
-    t += (utils.byte_to_int(s[31]) & 0x7f) << 248
+    t = sum([s[i] << (8 * i) for i in range(31)])
+    t += (s[31] & 0x7f) << 248
     return t
 
 
 def decode_scalar_x25519(k):
-    b = [utils.byte_to_int(b) for b in k]
+    b = [b for b in k]
     b[0] &= 248
     b[31] &= 127
     b[31] |= 64
