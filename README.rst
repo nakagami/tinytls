@@ -7,7 +7,7 @@ tinytls is a pure python TLS1.3 protocol wrapper.
 As a result of learning TLS1.3, 
 I wrote this as a sample implementation of TLS1.3 client.
 
-Builtin ssl module (Python3.7+, OpenSSL1.1.1+) can use as TLS1.3 client,
+Builtin ssl module (CPython3.7+, OpenSSL1.1.1+) can use as TLS1.3 client,
 so there is no advantage to use it especially in Python 3.
 
 Restriction
