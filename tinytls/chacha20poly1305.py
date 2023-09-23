@@ -33,6 +33,11 @@ from tinytls import utils
 sigma = b"expand 32-byte k"
 
 
+def bytes_to_int(b):
+    "Convert bytes to little endian int."
+    return utils.bytes_to_bint(reversed(b))
+
+
 def int_to_bytes(val, nbytes):
     "Convert int val to nbytes little endian bytes."
     v = abs(val)
@@ -104,7 +109,7 @@ class ChaCha20:
 
         state = []
         for i in range(0, len(block_bytes), 4):
-            state.append(utils.bytes_to_int(block_bytes[i:i+4]))
+            state.append(bytes_to_int(block_bytes[i:i+4]))
         self.state = state
         self.block = self.chacha20_round_bytes()
         self.block_pos = 0
@@ -159,12 +164,12 @@ def trim_pad(b):
 
 def poly1305_mac(msg, key):
     assert len(key) == 32
-    r = utils.bytes_to_int(key[:16]) & 0x0ffffffc0ffffffc0ffffffc0fffffff
-    s = utils.bytes_to_int(key[16:])
+    r = bytes_to_int(key[:16]) & 0x0ffffffc0ffffffc0ffffffc0fffffff
+    s = bytes_to_int(key[16:])
     a = 0  # a is the accumulator
     p = (1 << 130) - 5
     for i in range(1, int(math.ceil(float(len(msg))/16)) + 1):
-        n = utils.bytes_to_int(msg[(i-1)*16: i*16] + b'\x01')
+        n = bytes_to_int(msg[(i-1)*16: i*16] + b'\x01')
         a += n
         a = (r * a) % p
     a += s

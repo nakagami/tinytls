@@ -45,15 +45,6 @@ def urandom(n):
         return bytes([random.getrandbits(8) for _ in range(n)])
 
 
-def bytes_to_int(b):
-    "Convert bytes to little endian int."
-    n = 0
-    for c in reversed(b):
-        n <<= 8
-        n += c
-    return n
-
-
 def bytes_to_bint(b):
     "Convert bytes to big endian int."
     n = 0
