@@ -28,8 +28,6 @@
 https://en.wikipedia.org/wiki/Curve25519
 """
 # I referred to https://asecuritysite.com/encryption/python_25519ecdh
-from tinytls import utils
-
 
 P = 2 ** 255 - 19
 A24 = 121665
