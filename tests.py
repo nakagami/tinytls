@@ -1,4 +1,3 @@
-import socket
 import unittest
 import tinytls
 from tinytls import utils
