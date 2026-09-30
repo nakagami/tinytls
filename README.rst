@@ -62,8 +62,10 @@ Reference
 
 - https://github.com/tex2e/mako-tls13 (special thanks!)
 - https://datatracker.ietf.org/doc/html/rfc8446
+- https://datatracker.ietf.org/doc/html/rfc5903
 - https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant
 - https://asecuritysite.com/encryption/python_25519ecdh
+- https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
 
 Check the server
 +++++++++++++++++++++++++++++
@@ -74,4 +76,5 @@ use a command like the following to check if the server can be connected
 ::
 
    openssl s_client -tls1_3 -ciphersuites 'TLS_CHACHA20_POLY1305_SHA256' \
+                                -curves 'prime256v1:secp384r1:X25519' \
                                 -state -debug -connect enabled.tls13.com:443
