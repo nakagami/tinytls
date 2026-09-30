@@ -260,6 +260,17 @@ class TestHttps(unittest.TestCase):
         sock.close()
 
 
+try:
+    import ssl
+    import threading
+    import tempfile
+    import subprocess
+    HAS_LOCAL_TLS = True
+except ImportError:
+    HAS_LOCAL_TLS = False
+
+
+@unittest.skipIf(not HAS_LOCAL_TLS, "ssl/threading/subprocess required for TestLocalTLS")
 class TestLocalTLS(unittest.TestCase):
     def _test_tls_curve(self, curve_name):
         import ssl
