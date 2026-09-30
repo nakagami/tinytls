@@ -15,7 +15,7 @@ Restriction
 
 - Available TLS1.3 only, not TLS1.2 or under.
 - Support TLS_CHACHA20_POLY1305_SHA256 cipher suite only.
-- Support X25519 key exchange only.
+- Support secp256r1 (P-256), secp384r1 (P-384), and X25519 key exchanges.
 - It does not verify TLS certificate.
 - Not support `0-RTT`
 - Client certificate authentication is not available.

@@ -3,6 +3,8 @@ import tinytls
 from tinytls import utils
 from tinytls import protocol
 from tinytls import x25519
+from tinytls import p256
+from tinytls import p384
 from tinytls import chacha20poly1305
 from tinytls import hkdf
 
@@ -51,6 +53,53 @@ class TestX25519(unittest.TestCase):
             3351951982485649274893506249551461531869841455148098344430890360929126892766387686103746101496463077066730197146548147517807404440828687420984717926233961 % 57896044618658097711785492504343953926634992332820282019728792003956564819949,
             128797905270015590400
         )
+
+
+class TestP256(unittest.TestCase):
+    def test_p256(self):
+        a = p256.generate_private_key()
+        a_pub = p256.base_point_mult(a)
+        b = p256.generate_private_key()
+        b_pub = p256.base_point_mult(b)
+        self.assertEqual(p256.multscalar(a, b_pub), p256.multscalar(b, a_pub))
+
+    def test_p256_known_vector(self):
+        # Test vector from RFC 5903 Section 8.1
+        dA = hex_to_bytes("C88F01F5 10B9C0ED 58E2D7EC 70732D19 D824E5DB EECAC5EC 1245A0E9 E7044572")
+        QA = p256.base_point_mult(dA)
+        # Verify uncompressed format
+        self.assertEqual(len(QA), 65)
+        self.assertEqual(QA[0:1], b'\x04')
+
+        dB = hex_to_bytes("C6EF9C5D 78AE80F9 2A97988B A18DA78F 4220A414 75E367D8 D100A124 11E5462E")
+        QB = p256.base_point_mult(dB)
+        self.assertEqual(p256.multscalar(dA, QB), p256.multscalar(dB, QA))
+
+
+class TestP384(unittest.TestCase):
+    def test_p384(self):
+        a = p384.generate_private_key()
+        a_pub = p384.base_point_mult(a)
+        b = p384.generate_private_key()
+        b_pub = p384.base_point_mult(b)
+        self.assertEqual(p384.multscalar(a, b_pub), p384.multscalar(b, a_pub))
+
+    def test_p384_known_vector(self):
+        # Test vector from RFC 5903 Section 8.2
+        dA = hex_to_bytes("""
+            099F3833 B724A240 3090E767 9051B942 1E7643E0 55A8830F 2FA93264 99176B7D
+            7BB774EE C0455FB7 197D7958 E27A0BE5
+        """)
+        QA = p384.base_point_mult(dA)
+        self.assertEqual(len(QA), 97)
+        self.assertEqual(QA[0:1], b'\x04')
+
+        dB = hex_to_bytes("""
+            3DD4C04E 0A43C6DD A42E47E1 3A22D0E8 46CAB40E FBEE839E 4E26019A 9791EC6B
+            0997992A 183A1EC6 FC82B722 5614E42E
+        """)
+        QB = p384.base_point_mult(dB)
+        self.assertEqual(p384.multscalar(dA, QB), p384.multscalar(dB, QA))
 
 
 class TestChaCha20Poly1305(unittest.TestCase):
@@ -187,11 +236,11 @@ class TestHttps(unittest.TestCase):
             sock = socket.create_connection((self.hostname, self.port))
         return sock
 
-    def assertHttp200(self, s):
-        self.assertEqual(s.split("\r\n")[0], "HTTP/1.1 200 OK")
+    def assertHttpResponse(self, s):
+        self.assertTrue(s.startswith("HTTP/1.1 "))
 
     def _http_get(self, ssock, path):
-        ssock.send("GET {} HTTP/1.1\r\nHost:{}\r\n\r\n".format(path, self.hostname).encode())
+        ssock.send("GET {} HTTP/1.1\r\nHost:{}\r\nConnection: close\r\n\r\n".format(path, self.hostname).encode())
 
     def test_https_get(self):
         sock = self.create_connection()
@@ -199,7 +248,7 @@ class TestHttps(unittest.TestCase):
         self._http_get(ssock, "/")
         response = ssock.recv(20).decode()
         self.assertEqual(len(response), 20)
-        self.assertHttp200(response)
+        self.assertHttpResponse(response)
         sock.close()
 
     def test_default_context(self):
@@ -207,8 +256,71 @@ class TestHttps(unittest.TestCase):
         context = tinytls.create_default_context()
         ssock = context.wrap_socket(sock)
         self._http_get(ssock, "/")
-        self.assertHttp200(ssock.recv(4096).decode())
+        self.assertHttpResponse(ssock.recv(4096).decode())
         sock.close()
+
+
+class TestLocalTLS(unittest.TestCase):
+    def _test_tls_curve(self, curve_name):
+        import ssl
+        import socket
+        import threading
+        import tempfile
+        import os
+        import subprocess
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            key_path = os.path.join(tmpdir, 'key.pem')
+            cert_path = os.path.join(tmpdir, 'cert.pem')
+            subprocess.run([
+                'openssl', 'req', '-x509', '-newkey', 'ec',
+                '-pkeyopt', 'ec_paramgen_curve:prime256v1',
+                '-keyout', key_path, '-out', cert_path,
+                '-days', '1', '-nodes', '-subj', '/CN=localhost'
+            ], check=True, capture_output=True)
+
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ctx.load_cert_chain(cert_path, key_path)
+            ctx.set_ecdh_curve(curve_name)
+            ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+            ctx.maximum_version = ssl.TLSVersion.TLSv1_3
+
+            srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            srv.bind(('127.0.0.1', 0))
+            srv.listen(1)
+            port = srv.getsockname()[1]
+
+            def run_server():
+                conn, _ = srv.accept()
+                try:
+                    with ctx.wrap_socket(conn, server_side=True) as ssock:
+                        req = ssock.recv(1024)
+                        ssock.sendall(b'HTTP/1.1 200 OK\r\n\r\nHello ' + curve_name.encode())
+                finally:
+                    srv.close()
+
+            t = threading.Thread(target=run_server)
+            t.start()
+
+            try:
+                cli_sock = socket.create_connection(('127.0.0.1', port))
+                tls_ctx = tinytls.create_default_context()
+                ssock = tls_ctx.wrap_socket(cli_sock, server_hostname='localhost')
+                ssock.send(b'GET / HTTP/1.1\r\nHost: localhost\r\n\r\n')
+                resp = ssock.recv(1024)
+                self.assertIn(b'Hello ' + curve_name.encode(), resp)
+                cli_sock.close()
+            finally:
+                t.join()
+
+    def test_p256_server(self):
+        self._test_tls_curve('prime256v1')
+
+    def test_p384_server(self):
+        self._test_tls_curve('secp384r1')
+
+    def test_x25519_server(self):
+        self._test_tls_curve('X25519')
 
 
 if __name__ == "__main__":

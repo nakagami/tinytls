@@ -27,18 +27,36 @@
 from tinytls import protocol
 from tinytls import hkdf
 from tinytls import x25519
+from tinytls import p256
+from tinytls import p384
 from tinytls import utils
 from tinytls.chacha20poly1305 import ChaCha20Poly1305
 
 
-VERSION = (0, 1, 2)
+VERSION = (0, 1, 3)
 __version__ = '%s.%s.%s' % VERSION
 
 
 class TLSContext:
     def __init__(self):
-        self.client_private = utils.urandom(32)
-        self.client_public = x25519.base_point_mult(self.client_private)
+        self.p256_private = p256.generate_private_key()
+        self.p256_public = p256.base_point_mult(self.p256_private)
+
+        self.x25519_private = utils.urandom(32)
+        self.x25519_public = x25519.base_point_mult(self.x25519_private)
+
+        self.p384_private = p384.generate_private_key()
+        self.p384_public = p384.base_point_mult(self.p384_private)
+
+        # For backwards compatibility:
+        self.client_private = self.x25519_private
+        self.client_public = self.x25519_public
+
+        self.client_shares = [
+            (protocol.key_exchange_secp256r1, self.p256_public),
+            (protocol.key_exchange_x25519, self.x25519_public),
+            (protocol.key_exchange_secp384r1, self.p384_public),
+        ]
         self.messages = []
 
     def get_messages(self):
@@ -47,8 +65,19 @@ class TLSContext:
     def append_message(self, message):
         self.messages.append(message)
 
-    def set_key_exchange(self, server_public):
-        self.shared_key = x25519.multscalar(self.client_private, server_public)
+    def set_key_exchange(self, group, server_public=None):
+        if server_public is None:
+            server_public = group
+            group = protocol.key_exchange_x25519
+
+        if group == protocol.key_exchange_secp256r1:
+            self.shared_key = p256.multscalar(self.p256_private, server_public)
+        elif group == protocol.key_exchange_x25519:
+            self.shared_key = x25519.multscalar(self.x25519_private, server_public)
+        elif group == protocol.key_exchange_secp384r1:
+            self.shared_key = p384.multscalar(self.p384_private, server_public)
+        else:
+            raise Exception("Unsupported key exchange group: %r" % (group,))
 
     def key_schedule_in_handshake(self):
         messages = self.get_messages()
@@ -115,7 +144,7 @@ class TLSSocket:
             b = b[ln:]
 
     def client_hello(self):
-        message = protocol.client_hello_message(self.ctx.client_public, self.server_hostname)
+        message = protocol.client_hello_message(self.ctx.client_shares, self.server_hostname)
         self.ctx.append_message(message)
         client_hello_handshake = protocol.handshake + protocol.TLS12 + utils.bint_to_bytes(len(message), 2) + message
         self._sendall(client_hello_handshake)
@@ -127,8 +156,8 @@ class TLSSocket:
         assert head[:3] == protocol.handshake + protocol.TLS12
         assert message[:1] == protocol.server_hello
         self.ctx.append_message(message)
-        server_public = protocol.parse_server_hello(message)
-        self.ctx.set_key_exchange(server_public)
+        group, server_public = protocol.parse_server_hello(message)
+        self.ctx.set_key_exchange(group, server_public)
         self.ctx.key_schedule_in_handshake()
 
     def server_handshake(self):
@@ -177,10 +206,18 @@ class TLSSocket:
         )
 
     def recv(self, ln):
-        if not self.read_buf:
+        while not self.read_buf:
             head, message = protocol.read_content(self.sock)
+            if not head or not message:
+                break
             plaindata, content_type = self.ctx.server_app_data_crypto.decrypt_and_verify(message, head)
-            self.read_buf = plaindata
+            if content_type == protocol.application_data:
+                self.read_buf = plaindata
+            elif content_type == protocol.handshake:
+                # ignore post-handshake messages (e.g. new_session_ticket)
+                continue
+            elif content_type == protocol.alert:
+                break
         r, self.read_buf = self.read_buf[:ln], self.read_buf[ln:]
         return r
 

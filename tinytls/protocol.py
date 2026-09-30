@@ -106,6 +106,8 @@ signature_schemas = b"".join([
 
 
 # key exchange method
+key_exchange_secp256r1 = b"\x00\x17"
+key_exchange_secp384r1 = b"\x00\x18"
 key_exchange_x25519 = b"\x00\x1d"
 
 
@@ -153,23 +155,36 @@ def parse_server_hello(data):
     extensions = data[i:]
     assert ln == len(extensions)
 
+    group = None
     server_public = b""
     while len(extensions):
         extension_type = extensions[:2]
         extension_ln = utils.bytes_to_bint(extensions[2:4])
         extension_value = extensions[4:4 + extension_ln]
         if extension_type == key_share:
-            extension_value[:2] == key_exchange_x25519
-            assert utils.bytes_to_bint(extension_value[2:4]) == 32
-            server_public = extension_value[4:]
+            group = extension_value[:2]
+            key_len = utils.bytes_to_bint(extension_value[2:4])
+            server_public = extension_value[4:4 + key_len]
         extensions = extensions[4 + extension_ln:]
 
-    assert len(server_public) == 32
-    return server_public
+    assert group in (key_exchange_secp256r1, key_exchange_secp384r1, key_exchange_x25519)
+    return group, server_public
 
 
-def client_hello_message(pub_key, server_hostname=None):
+def client_hello_message(key_shares, server_hostname=None):
     # https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.2
+    if isinstance(key_shares, bytes):
+        if len(key_shares) == 32:
+            key_shares = [(key_exchange_x25519, key_shares)]
+        elif len(key_shares) == 65:
+            key_shares = [(key_exchange_secp256r1, key_shares)]
+        elif len(key_shares) == 97:
+            key_shares = [(key_exchange_secp384r1, key_shares)]
+    elif isinstance(key_shares, dict):
+        key_shares = list(key_shares.items())
+    else:
+        key_shares = list(key_shares)
+
     base = TLS12            # legacy version
     base += utils.urandom(32)     # random
     base += b"\x00"          # legacy_session_id (zero length vector)
@@ -190,7 +205,14 @@ def client_hello_message(pub_key, server_hostname=None):
         b = utils.bint_to_bytes(len(b), 2) + b
         b = utils.bint_to_bytes(len(b), 2) + b
         extensions = server_name + b
-    extensions += supported_groups + b"\x00\x04" + b"\x00\x02" + key_exchange_x25519
+
+    groups = b"".join([g for g, _ in key_shares])
+    extensions += (
+        supported_groups +
+        utils.bint_to_bytes(len(groups) + 2, 2) +
+        utils.bint_to_bytes(len(groups), 2) +
+        groups
+    )
     # extensions += session_ticket + b"\x00\x00"
     extensions += encrypt_then_mac + b"\x00\x00"
     # extensions += extended_master_secret + b"\x00\x00"
@@ -199,9 +221,16 @@ def client_hello_message(pub_key, server_hostname=None):
     extensions += signature_algorithms + b
     extensions += supported_versions + b"\x00\x03" + b"\x02" + TLS13
     # extensions += psk_kex_modes + b"\x00\x02\x01\x01"
+
+    key_shares_bytes = b"".join([
+        g + utils.bint_to_bytes(len(k), 2) + k
+        for g, k in key_shares
+    ])
     extensions += (
-        key_share + b"\x00\x26" + b"\x00\x24" + key_exchange_x25519 +
-        utils.bint_to_bytes(len(pub_key), 2) + pub_key
+        key_share +
+        utils.bint_to_bytes(len(key_shares_bytes) + 2, 2) +
+        utils.bint_to_bytes(len(key_shares_bytes), 2) +
+        key_shares_bytes
     )
 
     base += utils.bint_to_bytes(len(extensions), 2) + extensions
