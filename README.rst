@@ -23,7 +23,7 @@ Restriction
 Supported Python
 +++++++++++++++++++
 
-- Python3.7+
+- Python3.11+
 - MicroPython
 
 Example
